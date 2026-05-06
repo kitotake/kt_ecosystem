@@ -26,7 +26,6 @@ RegisterNetEvent("kt_character:createCharacter", function(data)
     local genderModel = Utils.genderEnumToModel(genderEnum)
 
     local character = {
-        identifier  = license,
         unique_id   = unique_id,
         firstname   = string.trim(data.firstname),
         lastname    = string.trim(data.lastname),
@@ -53,9 +52,8 @@ RegisterNetEvent("kt_character:createCharacter", function(data)
 
     -- FIX #10 : gender ET model inclus dans l'INSERT
     exports.oxmysql:execute(
-        "INSERT INTO characters (identifier, unique_id, firstname, lastname, dateofbirth, gender, model, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO characters (unique_id, firstname, lastname, dateofbirth, gender, model, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
         {
-            character.identifier,
             character.unique_id,
             character.firstname,
             character.lastname,
