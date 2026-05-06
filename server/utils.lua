@@ -1,6 +1,6 @@
 -- server/utils.lua (kt_character)
--- FIX: genderEnumToModel("m") retournait "m" → doit retourner "mp_m_freemode_01"
--- FIX: suppression UPDATE last_login (ping inutile)
+-- SYNC SQL : gender/ENUM supprimé → ped_model VARCHAR(60) direct
+-- Plus de conversion m/f ↔ model GTA V : la BDD stocke directement le modèle GTA V
 
 Utils = {}
 
@@ -14,15 +14,24 @@ function string.trim(s)
     return s:match("^%s*(.-)%s*$")
 end
 
-function Utils.modelToGenderEnum(model)
-    if model == "mp_f_freemode_01" then return "f" end
-    return "m"
-end
-
--- FIX: retourne toujours un model GTA V valide, jamais "m" ou "f" seul
-function Utils.genderEnumToModel(enum)
-    if enum == "f" or enum == "mp_f_freemode_01" then
+-- Normalise n'importe quelle entrée vers un modèle GTA V valide.
+-- Gère : "m", "f", "mp_m_freemode_01", "mp_f_freemode_01", nil
+function Utils.normalizePedModel(input)
+    if input == "f" or input == "mp_f_freemode_01" then
         return "mp_f_freemode_01"
     end
     return "mp_m_freemode_01"
+end
+
+-- Rétrocompatibilité : anciens appels modelToGenderEnum / genderEnumToModel
+-- Conservés pour ne pas casser d'éventuels appels externes,
+-- mais redirigés vers normalizePedModel
+function Utils.modelToGenderEnum(model)
+    -- Inutilisé en interne (plus d'ENUM en BDD), conservé pour compat externe
+    if model == "mp_f_freemode_01" or model == "f" then return "f" end
+    return "m"
+end
+
+function Utils.genderEnumToModel(enum)
+    return Utils.normalizePedModel(enum)
 end
