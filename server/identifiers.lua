@@ -1,3 +1,5 @@
+-- server/identifiers.lua (kt_character)
+
 Identifiers = {}
 
 function Identifiers.getLicense(src)

@@ -4,7 +4,14 @@ game 'gta5'
 name 'kt_character'
 author 'kitotake'
 description 'Character Creator + Appearance (React TSX UI)'
-version '1.0.0'
+version '2.2.1'
+
+-- FIX : déclarer les dépendances pour garantir l'ordre de démarrage.
+-- oxmysql et union doivent être chargés AVANT kt_character.
+dependencies {
+    'oxmysql',
+    'union',
+}
 
 ui_page 'web/dist/index.html'
 

@@ -1,7 +1,8 @@
 -- kt_character/client/main.lua
--- FIX : union:spawn:apply NE rappelle plus ApplyFullAppearance ici.
---       union/client/modules/spawn/main.lua est l'UNIQUE responsable du spawn+skin.
---       Ce fichier ne gère que : Creator NUI, CharacterSelect NUI, fermeture NUI.
+-- FIX : suppression des handlers kt_appearance:apply et kt_appearance:update
+--       en double (déjà dans client/appearance.lua).
+-- FIX : closeCreator réinitialise currentUniqueId uniquement si on ferme
+--       en dehors d'un spawn (pas après sélection de personnage).
 
 local VERSION         = "2.2.1"
 local DEBUG           = true
@@ -16,11 +17,15 @@ end
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- CLEAN CLOSE
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-local function closeCreator()
+local function closeCreator(resetId)
     if DestroyCharacterCam then DestroyCharacterCam() end
     FreezeEntityPosition(PlayerPedId(), false)
     SetNuiFocus(false, false)
     nuiOpen = false
+    -- FIX : on n'efface pas currentUniqueId après la sélection d'un personnage
+    if resetId then
+        currentUniqueId = nil
+    end
     debugLog("Creator fermé", "INFO")
 end
 
@@ -89,7 +94,8 @@ RegisterNUICallback("cameraControl", function(data, cb)
 end)
 
 RegisterNUICallback("close", function(_, cb)
-    closeCreator()
+    -- FIX : fermeture manuelle → on réinitialise l'ID (abandon du creator)
+    closeCreator(true)
     SendNUIMessage({ type = "close" })
     cb("ok")
 end)
@@ -145,13 +151,11 @@ end)
 RegisterNetEvent("kt_character:created", function(character)
     currentUniqueId = character.unique_id
     FreezeEntityPosition(PlayerPedId(), false)
-    -- FIX VITESSE : plus de Wait(1500) — l'apparence est déjà appliquée
-    --               par union:spawn:apply qui sera déclenché par le serveur
     debugLog("Personnage créé: " .. (character.firstname or "?"), "INFO")
 end)
 
 RegisterNetEvent("kt_character:closeUI", function()
-    closeCreator()
+    closeCreator(false)
     SendNUIMessage({ type = "close" })
     debugLog("closeUI reçu", "INFO")
 end)
@@ -173,8 +177,6 @@ RegisterNetEvent("kt_character:outfitDeleted", function(id)      SendNUIMessage(
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- EVENTS UNION — SÉLECTION DE PERSONNAGE
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
--- union/server/spawn/handler.lua → union:spawn:selectCharacter
 RegisterNetEvent("union:spawn:selectCharacter", function(characters)
     if nuiOpen then return end
     debugLog(("union:spawn:selectCharacter reçu: %d perso(s)"):format(characters and #characters or 0), "INFO")
@@ -187,7 +189,6 @@ RegisterNetEvent("union:spawn:selectCharacter", function(characters)
     })
 end)
 
--- union/client/characterManager.lua → characters:openSelection
 RegisterNetEvent("characters:openSelection", function(data)
     if nuiOpen then return end
     local chars = data and data.characters or {}
@@ -220,22 +221,14 @@ RegisterNetEvent("characters:openCreation",   function() if not nuiOpen then _op
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- EVENTS UNION — SPAWN
--- FIX : on ferme juste la NUI, on N'applique PAS le skin ici.
---       union/client/modules/spawn/main.lua s'en charge.
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RegisterNetEvent("union:spawn:apply", function(characterData)
     if not characterData then return end
-
-    -- Stocker l'unique_id pour les commandes /skin etc.
     currentUniqueId = characterData.unique_id
-
-    -- Fermer la NUI si ouverte
     if nuiOpen then
         closeSelectionUI()
     end
-
-    -- ⚠️ NE PAS appeler ApplyFullAppearance ici.
-    --    union/client/modules/spawn/main.lua le fait déjà.
+    -- FIX : pas de ApplyFullAppearance ici — géré par union/client/modules/spawn/main.lua
     debugLog("union:spawn:apply reçu → NUI fermée, skin géré par spawn/main.lua", "INFO")
 end)
 
@@ -247,18 +240,11 @@ RegisterNetEvent("characters:doSpawn", function(charData)
 end)
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
--- EVENTS — APPARENCE (reloadskin / outfit)
+-- EVENTS — TENUE (outfit)
+-- FIX : kt_appearance:apply et kt_appearance:update
+--       sont gérés dans client/appearance.lua.
+--       On ne les enregistre PAS ici pour éviter le double appel.
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-RegisterNetEvent("kt_appearance:apply", function(data)
-    debugLog("kt_appearance:apply reçu", "INFO")
-    Citizen.CreateThread(function() ApplyFullAppearance(data) end)
-end)
-
-RegisterNetEvent("kt_appearance:update", function(data)
-    debugLog("kt_appearance:update reçu (compat)", "INFO")
-    Citizen.CreateThread(function() ApplyFullAppearance(data) end)
-end)
-
 RegisterNetEvent("kt_character:applyOutfit", function(data)
     debugLog("kt_character:applyOutfit reçu", "INFO")
     ApplyOutfit(data)

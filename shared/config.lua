@@ -1,0 +1,2 @@
+-- shared/config.lua (kt_character)
+-- Réservé pour configuration partagée client/serveur.

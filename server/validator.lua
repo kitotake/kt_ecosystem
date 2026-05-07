@@ -1,4 +1,4 @@
--- server/validator.lua
+-- server/validator.lua (kt_character)
 
 Validator = {}
 
@@ -13,7 +13,7 @@ function Validator.character(data)
         return false, "Nom invalide"
     end
 
-    local year = tonumber(string.sub(tostring(data.dateofbirth), 1, 4))
+    local year        = tonumber(string.sub(tostring(data.dateofbirth or ""), 1, 4))
     local currentYear = tonumber(os.date("%Y"))
 
     if not year then return false, "Format date invalide" end
