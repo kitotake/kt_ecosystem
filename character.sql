@@ -103,12 +103,10 @@ CREATE TABLE IF NOT EXISTS `character_outfits` (
     `props`         LONGTEXT     DEFAULT NULL,
     `is_job_outfit` TINYINT(1)   DEFAULT 0,
     `job_name`      VARCHAR(50)  DEFAULT NULL,
-    -- FIX : DEFAULT 0 pour cohérence avec characters.job_grade
     `job_grade`     INT          DEFAULT 0,
     `created_at`    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),
-    -- FIX : unicité (unique_id, name) pour les tenues personnelles
     UNIQUE KEY `uniq_outfit_name` (`unique_id`, `name`),
     INDEX `idx_unique_id` (`unique_id`),
     INDEX `idx_job` (`job_name`, `job_grade`),

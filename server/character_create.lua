@@ -1,7 +1,49 @@
 -- server/character_create.lua (kt_character)
 -- FIX : inserts séquentiels (callbacks chaînés) pour éviter les race conditions FK.
--- FIX : vérification du retour de generateUniqueId.
--- FIX : validation format date complet YYYY-MM-DD.
+-- FIX : vérification du retour de generateUniqueId + fallback UUID natif.
+-- FIX : validation format date complet YYYY-MM-DD avec mois et jour valides.
+
+-- FIX : fallback UUID v4 natif si exports['union']:generateUniqueId est indisponible
+local function generateFallbackUUID()
+    local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+    return string.gsub(template, "[xy]", function(c)
+        local v = (c == "x") and math.random(0, 15) or math.random(8, 11)
+        return string.format("%x", v)
+    end)
+end
+
+local function safeGenerateUniqueId()
+    -- Tenter via exports union en priorité
+    local ok, result = pcall(function()
+        return exports['union']:generateUniqueId()
+    end)
+    if ok and result and result ~= "" then
+        return result
+    end
+    -- Fallback UUID v4 natif
+    return generateFallbackUUID()
+end
+
+-- FIX : validation date complète — vérifie YYYY-MM-DD et plages mois/jour
+local function isValidDate(dateStr)
+    if not dateStr then return false end
+    local s = tostring(dateStr)
+    if not s:match("^%d%d%d%d%-%d%d%-%d%d$") then return false end
+    local y = tonumber(s:sub(1, 4))
+    local m = tonumber(s:sub(6, 7))
+    local d = tonumber(s:sub(9, 10))
+    if not y or not m or not d then return false end
+    if m < 1 or m > 12 then return false end
+    if d < 1 or d > 31 then return false end
+    -- Vérification fine des jours max par mois
+    local daysInMonth = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+    -- Année bissextile
+    if (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0) then
+        daysInMonth[2] = 29
+    end
+    if d > daysInMonth[m] then return false end
+    return true
+end
 
 RegisterNetEvent("kt_character:createCharacter", function(data)
     local src = source
@@ -18,23 +60,20 @@ RegisterNetEvent("kt_character:createCharacter", function(data)
         return
     end
 
-    -- FIX : vérification du unique_id généré
+    -- FIX : génération UUID avec fallback natif garanti
     local unique_id = data.unique_id
     if not unique_id or unique_id == "" then
-        local ok, result = pcall(function()
-            return exports['union']:generateUniqueId()
-        end)
-        if not ok or not result or result == "" then
+        unique_id = safeGenerateUniqueId()
+        if not unique_id or unique_id == "" then
             TriggerClientEvent("kt_character:error", src, "Impossible de générer un identifiant unique")
             return
         end
-        unique_id = result
     end
 
-    -- FIX : validation format date YYYY-MM-DD complet
+    -- FIX : validation date complète (mois, jour, bissextile)
     local dateStr = tostring(data.dateofbirth or "")
-    if not dateStr:match("^%d%d%d%d%-%d%d%-%d%d$") then
-        TriggerClientEvent("kt_character:error", src, "Format de date invalide (attendu : YYYY-MM-DD)")
+    if not isValidDate(dateStr) then
+        TriggerClientEvent("kt_character:error", src, "Format de date invalide (attendu : YYYY-MM-DD, ex: 1990-06-15)")
         return
     end
 

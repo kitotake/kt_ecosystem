@@ -3,8 +3,10 @@
 --       en double (déjà dans client/appearance.lua).
 -- FIX : closeCreator réinitialise currentUniqueId uniquement si on ferme
 --       en dehors d'un spawn (pas après sélection de personnage).
+-- FIX : NUI callback selectCharacter envoie kt_character:selectCharacter
+--       (et non characters:selectCharacter qui n'a pas de handler serveur).
 
-local VERSION         = "2.2.1"
+local VERSION         = "2.2.2"
 local DEBUG           = true
 local nuiOpen         = false
 local currentUniqueId = nil
@@ -130,14 +132,17 @@ end)
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- NUI CALLBACK — SÉLECTION DE PERSONNAGE
+-- FIX : on trigger kt_character:selectCharacter (handler existant dans
+--       server/events.lua) et NON characters:selectCharacter (inexistant).
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RegisterNUICallback("selectCharacter", function(data, cb)
     if not data or not data.charId then
         cb("error")
         return
     end
-    debugLog("selectCharacter → characters:selectCharacter charId=" .. tostring(data.charId), "INFO")
-    TriggerServerEvent("characters:selectCharacter", data.charId)
+    debugLog("selectCharacter → kt_character:selectCharacter charId=" .. tostring(data.charId), "INFO")
+    -- FIX : event corrigé — était "characters:selectCharacter" (inexistant côté serveur)
+    TriggerServerEvent("kt_character:selectCharacter", data.charId)
     cb("ok")
 end)
 
@@ -201,6 +206,14 @@ RegisterNetEvent("characters:openSelection", function(data)
         characters = chars,
         slots      = slots,
     })
+end)
+
+-- Compat alias : certains frameworks triggerent characters:selectCharacter côté client
+-- On le redirige vers le bon event serveur.
+RegisterNetEvent("characters:selectCharacter", function(charId)
+    if not charId then return end
+    debugLog("characters:selectCharacter (compat) → kt_character:selectCharacter " .. tostring(charId), "INFO")
+    TriggerServerEvent("kt_character:selectCharacter", charId)
 end)
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

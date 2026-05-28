@@ -4,7 +4,7 @@ game 'gta5'
 name 'kt_character'
 author 'kitotake'
 description 'Character Creator + Appearance (React TSX UI)'
-version '2.2.1'
+version '2.2.2'
 
 -- FIX : déclarer les dépendances pour garantir l'ordre de démarrage.
 -- oxmysql et union doivent être chargés AVANT kt_character.
@@ -21,8 +21,14 @@ files {
     'web/dist/assets/*.css'
 }
 
+-- FIX : ordre explicite des scripts client — appearance et camera AVANT main
+-- pour garantir que ApplyFullAppearance, ApplyOutfit, CreateCharacterCam, etc.
+-- sont définis avant que main.lua ne les appelle.
 client_scripts {
-    'client/*.lua'
+    'client/utils.lua',
+    'client/appearance.lua',
+    'client/camera.lua',
+    'client/main.lua',
 }
 
 server_scripts {

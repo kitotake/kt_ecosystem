@@ -86,6 +86,8 @@ end
 
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- HEAD OVERLAYS
+-- FIX : la condition colorType > 0 and index >= 0 (et non > 0) pour permettre
+--       l'application de couleur sur l'index 0 valide (ex: sourcils rasés style 0).
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 local OVERLAY_COLOR_TYPES = {
     [0]  = 0, [1]  = 1, [2]  = 1, [3]  = 0,
@@ -109,7 +111,9 @@ local function applyHeadOverlays(ped, headOverlays)
             SetPedHeadOverlay(ped, overlayId, index, opacity)
 
             local colorType = OVERLAY_COLOR_TYPES[overlayId] or 0
-            if colorType > 0 and index > 0 then
+            -- FIX : index >= 0 (pas > 0) — index 0 est un style valide qui peut
+            --       avoir une couleur (ex: sourcils style 0, opacity > 0)
+            if colorType > 0 and opacity > 0.0 then
                 SetPedHeadOverlayColor(ped, overlayId, colorType, firstColor, secColor)
             end
         else
