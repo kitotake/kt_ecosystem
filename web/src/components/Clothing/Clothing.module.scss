@@ -1,109 +1,602 @@
+// web/src/components/Clothing/Clothing.module.scss
+
 @use "../../style/variables" as *;
 @use "../../style/mixins" as *;
 
 .wrapper {
-  @include flex-col($spacing-sm);
+  @include flex-col(0);
   width: 100%;
 }
 
-.sectionTitle {
+// ── ONGLETS + COLLECTION ──────────────────────────────────────────────────
+.groupTabs {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+  margin-bottom: 10px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.groupTab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: $muted;
+  padding: 6px 4px;
+  cursor: pointer;
   font-size: $font-size-xs;
   font-weight: $font-weight-bold;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: $muted;
-  padding-bottom: $spacing-xs;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
-  margin-bottom: $spacing-xs;
+  font-family: $font-family-body;
+  transition: $transition;
+  transform: none !important;
+  box-shadow: none !important;
+
+  &:hover { color: $text-secondary; }
+
+  &Active {
+    color: $accent;
+    border-bottom-color: $accent;
+    background: rgba(0, 217, 255, 0.05);
+  }
 }
 
-// ── CLOTHING CARD ─────────────────────────────────────────────────────────
-.card {
-  background: rgba(0, 217, 255, 0.03);
-  border: 1px solid rgba(0, 217, 255, 0.08);
-  border-radius: $radius-sm;
-  overflow: hidden;
+.collectionSelect {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(0, 217, 255, 0.12) !important;
+  color: $muted !important;
+  border-radius: 5px !important;
+  padding: 3px 8px !important;
+  font-size: 10px !important;
+  font-family: $font-family-mono !important;
+  height: 24px !important;
+  cursor: pointer;
+  outline: none !important;
+  max-width: 110px;
+  appearance: none;
+  -webkit-appearance: none;
+
+  &:focus { border-color: rgba(0, 217, 255, 0.3) !important; }
+
+  option {
+    background: $bg;
+    color: $text;
+  }
+}
+
+// ── LOADING ───────────────────────────────────────────────────────────────
+.loading {
+  @include flex-col($spacing-sm);
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  color: $muted;
+  font-size: $font-size-sm;
+  gap: 10px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(0, 217, 255, 0.15);
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── LAYOUT ────────────────────────────────────────────────────────────────
+.layout {
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────
+.sidebar {
+  @include flex-col(3px);
+  overflow-y: auto;
+  max-height: 520px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 217, 255, 0.15) transparent;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 217, 255, 0.15);
+    border-radius: 2px;
+  }
+}
+
+.catBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 7px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(0, 217, 255, 0.05);
+  border-radius: 6px;
+  cursor: pointer;
   transition: $transition;
+  text-align: left;
+  position: relative;
+  width: 100%;
+  transform: none !important;
+  box-shadow: none !important;
 
   &:hover {
+    background: rgba(0, 217, 255, 0.05);
     border-color: rgba(0, 217, 255, 0.18);
   }
-}
-
-.cardHeader {
-  @include flex-between;
-  align-items: center;
-  padding: $spacing-sm $spacing-md;
-  cursor: pointer;
-  user-select: none;
-
-  &:hover {
-    background: rgba(0, 217, 255, 0.04);
+  &Active {
+    background: rgba(0, 217, 255, 0.09) !important;
+    border-color: rgba(0, 217, 255, 0.35) !important;
   }
+  &Used .catLabel { color: $text-secondary; }
 }
 
-.cardLeft {
-  @include flex-row($spacing-sm);
+.catThumbWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 217, 255, 0.08);
+  overflow: hidden;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.icon {
-  font-size: 16px;
-  width: 24px;
-  text-align: center;
+.catThumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
-.cardName {
+.catIcon { font-size: 14px; opacity: 0.4; }
+
+.catMeta {
+  @include flex-col(2px);
+  flex: 1;
+  min-width: 0;
+}
+
+.catLabel {
+  font-size: 10px;
+  font-weight: $font-weight-bold;
+  color: $muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: $transition;
+}
+
+.catSub {
+  font-size: 9.5px;
+  color: rgba(0, 217, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: $font-family-mono;
+}
+
+.usedDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: $accent;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px rgba(0, 217, 255, 0.7);
+}
+
+// ── PANEL PRINCIPAL ───────────────────────────────────────────────────────
+.panel {
+  @include flex-col($spacing-sm);
+  background: rgba(0, 217, 255, 0.02);
+  border: 1px solid rgba(0, 217, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.panelIcon { font-size: 15px; }
+
+.panelTitle {
   font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  color: $text-secondary;
+  font-weight: $font-weight-bold;
+  color: $text;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.cardValues {
-  font-size: $font-size-xs;
+.panelMeta {
+  font-size: 10px;
+  color: $muted;
+  font-family: $font-family-mono;
+  margin-left: auto;
+}
+
+// ── SELECTOR PANEL ────────────────────────────────────────────────────────
+.selectorPanel {
+  @include flex-col($spacing-sm);
+  flex: 1;
+  min-height: 0;
+}
+
+// ── PREVIEW ───────────────────────────────────────────────────────────────
+.previewRow {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 10px;
+  align-items: start;
+  flex-shrink: 0;
+}
+
+.previewImgWrap {
+  width: 110px;
+  height: 110px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 217, 255, 0.12);
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.previewMeta {
+  @include flex-col(6px);
+  padding-top: 2px;
+}
+
+.previewName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $text;
+  line-height: 1.3;
+}
+
+.previewIdx {
+  font-size: 10px;
   color: $muted;
   font-family: $font-family-mono;
 }
 
-.chevron {
+.blankBadge {
   font-size: 10px;
+  color: rgba($error, 0.7);
+  background: rgba($error, 0.08);
+  border: 1px solid rgba($error, 0.2);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.specialBadge {
+  font-size: 10px;
+  color: rgba(0, 217, 255, 0.7);
+  background: rgba(0, 217, 255, 0.07);
+  border: 1px solid rgba(0, 217, 255, 0.15);
+  padding: 2px 7px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+// ── TEXTURES ──────────────────────────────────────────────────────────────
+.texRow {
+  @include flex-col(4px);
+}
+
+.texLabel {
+  font-size: 10px;
+  font-weight: $font-weight-bold;
   color: $muted;
-  transition: transform $transition;
-
-  &.open {
-    transform: rotate(180deg);
-  }
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-// ── CARD BODY ─────────────────────────────────────────────────────────────
-.cardBody {
-  @include flex-col($spacing-sm);
-  padding: $spacing-sm $spacing-md $spacing-md;
-  border-top: 1px solid rgba(0, 217, 255, 0.06);
+.texGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.sliderRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $spacing-sm;
+.texBtn {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgba(0, 217, 255, 0.1);
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0 !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  transition: $transition !important;
+  transform: none !important;
+  box-shadow: none !important;
+  position: relative;
+  flex-shrink: 0;
+
+  &:hover { border-color: rgba(0, 217, 255, 0.4) !important; transform: scale(1.1) !important; }
+  &Active  { border-color: $accent !important; box-shadow: 0 0 0 1px rgba(0,217,255,.3) !important; }
 }
 
-// ── PROP REMOVE ──────────────────────────────────────────────────────────
+.texImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.texBlankOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: rgba($error, 0.6);
+  background: rgba($error, 0.08);
+}
+
+// ── RETIRER ───────────────────────────────────────────────────────────────
 .removeBtn {
   background: rgba($error, 0.08) !important;
   border: 1px solid rgba($error, 0.2) !important;
   color: rgba($error, 0.8) !important;
   font-size: $font-size-xs !important;
   padding: 4px 10px !important;
+  border-radius: 5px !important;
   height: auto !important;
   transform: none !important;
   box-shadow: none !important;
   transition: $transition !important;
+  cursor: pointer;
+  font-family: $font-family-body !important;
   align-self: flex-start;
 
   &:hover {
     background: rgba($error, 0.15) !important;
-    border-color: rgba($error, 0.4) !important;
     color: $error !important;
+    border-color: rgba($error, 0.4) !important;
   }
+}
+
+// ── TOOLBAR ───────────────────────────────────────────────────────────────
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(0, 217, 255, 0.1) !important;
+  color: $text !important;
+  border-radius: 6px !important;
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+  font-family: $font-family-body !important;
+  height: 28px !important;
+  outline: none !important;
+  transition: $transition !important;
+
+  &::placeholder { color: rgba(255,255,255,0.2); }
+  &:focus { border-color: rgba(0, 217, 255, 0.3) !important; }
+}
+
+.pageNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pageBtn {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(0, 217, 255, 0.1) !important;
+  border-radius: 4px !important;
+  color: $text-secondary !important;
+  font-size: 14px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: $transition !important;
+  transform: none !important;
+  box-shadow: none !important;
+  font-family: $font-family-body !important;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background: rgba(0, 217, 255, 0.12) !important;
+    border-color: $accent !important;
+    color: $accent !important;
+  }
+  &:disabled { opacity: 0.2 !important; cursor: not-allowed !important; }
+}
+
+.pageInfo {
+  font-size: 9.5px;
+  font-family: $font-family-mono;
+  color: $muted;
+  white-space: nowrap;
+}
+
+// ── GRILLE D'ITEMS ────────────────────────────────────────────────────────
+.itemGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  overflow-y: auto;
+  max-height: 300px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 217, 255, 0.15) transparent;
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 217, 255, 0.15);
+    border-radius: 2px;
+  }
+}
+
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1.5px solid rgba(0, 217, 255, 0.06) !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  transition: $transition !important;
+  transform: none !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  padding: 0 !important;
+
+  &:hover {
+    background: rgba(0, 217, 255, 0.06) !important;
+    border-color: rgba(0, 217, 255, 0.28) !important;
+    transform: translateY(-2px) !important;
+    z-index: 1;
+  }
+
+  &Active {
+    border-color: $accent !important;
+    background: rgba(0, 217, 255, 0.1) !important;
+    box-shadow: 0 0 0 1px rgba(0, 217, 255, 0.25) !important;
+  }
+
+  &Blank {
+    opacity: 0.45;
+  }
+}
+
+.itemImgWrap {
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itemImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.blankOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.2);
+}
+
+.itemLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 4px;
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(0,217,255,0.05);
+}
+
+.itemName {
+  font-size: 8.5px;
+  font-weight: $font-weight-semibold;
+  color: $text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.itemNoName {
+  font-size: 8.5px;
+  color: $muted;
+  font-family: $font-family-mono;
+}
+
+.itemIdx {
+  font-size: 8px;
+  color: rgba(0, 217, 255, 0.35);
+  font-family: $font-family-mono;
+  line-height: 1;
+}
+
+.itemCardActive .itemIdx { color: $accent; }
+
+// ── DIVERS ────────────────────────────────────────────────────────────────
+.imgErr {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.2);
+}
+
+.noResults {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: $spacing-md;
+  color: $muted;
+  font-size: $font-size-sm;
+}
+
+.searchCount {
+  font-size: 10px;
+  color: $muted;
+  text-align: right;
+  font-family: $font-family-mono;
+}
+
+.emptyCollection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $muted;
+  font-size: $font-size-sm;
+  font-style: italic;
 }

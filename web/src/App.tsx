@@ -4,8 +4,8 @@
 //   - action="..." pour CharacterSelect (union/kt_character)
 
 import { useState, useEffect } from "react";
-import Creator from "./pages/Creator";
-import CharacterSelect from "./pages/CharacterSelect";
+import Creator from "./pages/Creator/Creator";
+import CharacterSelect from "./pages/CharacterSelect/CharacterSelect";
 import "./style/global.scss";
 
 interface Character {
