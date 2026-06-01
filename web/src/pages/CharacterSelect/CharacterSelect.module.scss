@@ -1,8 +1,8 @@
 // web/src/pages/CharacterSelect.module.scss
 // Design : cartes visuelles avec silhouette SVG
 
-@use "../style/variables.scss" as *;
-@use "../style/mixins.scss" as *;
+@use "../../style/variables.scss" as *;
+@use "../../style/mixins.scss" as *;
 
 @keyframes fadeIn {
   from { opacity: 0; }

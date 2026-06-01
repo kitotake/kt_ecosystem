@@ -1,44 +1,43 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Creator.tsx — Rendu pur, AUCUNE logique métier
-// Toute la logique est dans hooks/useCreator.ts
+// Creator.tsx — Identité + Tenue uniquement
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import styles from "./Creator.module.scss";
 import { useCreator, STEPS } from "../../hooks/useCreator";
 
-import Slider        from "../../components/Slider/Slider";
-import Category      from "../../components/Category/Category";
-import ColorPicker   from "../../components/ColorPicker/ColorPicker";
-import Field         from "../../components/Field/Field";
-import Parents       from "../../components/Parents/Parents";
-import FaceFeatures  from "../../components/FaceFeatures/FaceFeatures";
-import HeadOverlays  from "../../components/HeadOverlays/HeadOverlays";
-import Tattoos       from "../../components/Tattoos/Tattoos";
+import Category        from "../../components/Category/Category";
+import Field           from "../../components/Field/Field";
 import AssetPickerPage from "../AssetPickerPage/AssetPickerPage";
 
 // ─── Boutons caméra ───────────────────────────────────────────────────────
 const CAM_BUTTONS = [
-  { action: "rotateLeft",  icon: "↺", label: "Gauche",  title: "Tourner à gauche" },
-  { action: "rotateRight", icon: "↻", label: "Droite",  title: "Tourner à droite" },
-  { action: "zoomIn",      icon: "⊕", label: "Zoom +",  title: "Zoom avant"       },
-  { action: "zoomOut",     icon: "⊖", label: "Zoom -",  title: "Zoom arrière"     },
-  { action: "focusHead",   icon: "◯", label: "Tête",    title: "Focus visage"     },
-  { action: "focusBody",   icon: "▭", label: "Corps",   title: "Focus corps"      },
-  { action: "focusFull",   icon: "▬", label: "Entier",  title: "Vue entière"      },
-  { action: "resetCam",    icon: "⌖", label: "Reset",   title: "Réinitialiser"    },
+  { action: "rotateLeft",  icon: "↺", label: "Gauche", title: "Tourner à gauche" },
+  { action: "rotateRight", icon: "↻", label: "Droite", title: "Tourner à droite" },
+  { action: "zoomIn",      icon: "⊕", label: "Zoom +", title: "Zoom avant"       },
+  { action: "zoomOut",     icon: "⊖", label: "Zoom -", title: "Zoom arrière"     },
+  { action: "focusHead",   icon: "◯", label: "Tête",   title: "Focus visage"     },
+  { action: "focusBody",   icon: "▭", label: "Corps",  title: "Focus corps"      },
+  { action: "focusFull",   icon: "▬", label: "Entier", title: "Vue entière"      },
+  { action: "resetCam",    icon: "⌖", label: "Reset",  title: "Réinitialiser"    },
 ];
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function Creator() {
   const {
     visible, stepIndex, errors, serverError, submitting, isLastStep, currentStep,
-    identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos,
+    identity,
     closeUI, goToStep, nextStep, prevStep, handleSubmit, camControl, getAge,
-    updateIdentity, updateHeadBlend, updateFaceFeatures, updateHeadOverlays,
-    updateHair, updateComponents, updateProps, updateTattoos,
+    updateIdentity, updateComponents, updateProps,
   } = useCreator();
 
   if (!visible) return null;
+
+  // Uniquement les 2 étapes utiles
+  const ACTIVE_STEPS = STEPS.filter((s) =>
+    s.id === "identity" || s.id === "clothing"
+  );
+  const activeIndex = ACTIVE_STEPS.findIndex((s) => s.id === currentStep.id);
+  const isClothingStep = currentStep.id === "clothing";
 
   return (
     <>
@@ -61,32 +60,29 @@ export default function Creator() {
       {/* ── Panneau principal ───────────────────────────────────────────── */}
       <div className={styles.container}>
 
-        {/* Step progress bar */}
+        {/* Step progress bar — seulement les 2 étapes actives */}
         <div className={styles.stepBar}>
-          {STEPS.map((s, i) => (
+          {ACTIVE_STEPS.map((s, i) => (
             <button
               key={s.id}
               className={[
                 styles.stepDot,
-                i === stepIndex ? styles.stepActive : "",
-                i < stepIndex  ? styles.stepDone   : "",
+                s.id === currentStep.id ? styles.stepActive : "",
+                i < activeIndex         ? styles.stepDone   : "",
               ].join(" ")}
-              onClick={() => i < stepIndex && goToStep(i)}
+              onClick={() => i < activeIndex && goToStep(STEPS.findIndex((x) => x.id === s.id))}
               title={s.label}
             >
-              <span className={styles.stepDotIcon}>{i < stepIndex ? "✓" : s.icon}</span>
+              <span className={styles.stepDotIcon}>{i < activeIndex ? "✓" : s.icon}</span>
               <span className={styles.stepDotLabel}>{s.label}</span>
             </button>
           ))}
-          <div
-            className={styles.stepProgress}
-            style={{ width: `${(stepIndex / (STEPS.length - 1)) * 100}%` }}
-          />
+         
         </div>
 
         {/* Step header */}
         <div className={styles.stepHeader}>
-          <span className={styles.stepNum}>{stepIndex + 1} / {STEPS.length}</span>
+          <span className={styles.stepNum}>{activeIndex + 1} / {ACTIVE_STEPS.length}</span>
           <h2 className={styles.stepTitle}>
             <span>{currentStep.icon}</span> {currentStep.label}
           </h2>
@@ -101,13 +97,13 @@ export default function Creator() {
           </button>
         </div>
 
-        {/* Messages */}
+        {/* Messages erreur serveur */}
         {serverError && <div className={styles.error}>{serverError}</div>}
 
-        {/* ── Contenu de l'étape ──────────────────────────────────────── */}
+        {/* ── Contenu ─────────────────────────────────────────────────── */}
         <div className={styles.stepContent}>
 
-          {/* ── IDENTITÉ ─────────────────────────────────────────────── */}
+          {/* IDENTITÉ */}
           {currentStep.id === "identity" && (
             <>
               <Category title="État civil" icon="👤">
@@ -132,7 +128,10 @@ export default function Creator() {
               <Category title="Genre" icon="⚧">
                 <div className={styles.genderRow}>
                   <button
-                    className={[styles.genderBtn, identity.gender === "mp_m_freemode_01" ? styles.genderActive : ""].join(" ")}
+                    className={[
+                      styles.genderBtn,
+                      identity.gender === "mp_m_freemode_01" ? styles.genderActive : "",
+                    ].join(" ")}
                     onClick={() => updateIdentity("gender", "mp_m_freemode_01")}
                   >
                     <span className={styles.genderIcon}>♂</span>
@@ -140,7 +139,10 @@ export default function Creator() {
                     <span className={styles.genderSub}>mp_m</span>
                   </button>
                   <button
-                    className={[styles.genderBtn, identity.gender === "mp_f_freemode_01" ? styles.genderActive : ""].join(" ")}
+                    className={[
+                      styles.genderBtn,
+                      identity.gender === "mp_f_freemode_01" ? styles.genderActive : "",
+                    ].join(" ")}
                     onClick={() => updateIdentity("gender", "mp_f_freemode_01")}
                   >
                     <span className={styles.genderIcon}>♀</span>
@@ -152,62 +154,15 @@ export default function Creator() {
             </>
           )}
 
-          {/* ── PARENTS ──────────────────────────────────────────────── */}
-          {currentStep.id === "parents" && (
-            <Category title="Mélange parental" icon="🧬">
-              <Parents data={headBlend} onChange={updateHeadBlend} />
-            </Category>
-          )}
-
-          {/* ── TRAITS VISAGE ─────────────────────────────────────────── */}
-          {currentStep.id === "features" && (
-            <Category title="Traits du visage" icon="◉">
-              <FaceFeatures data={faceFeatures} onChange={updateFaceFeatures} />
-            </Category>
-          )}
-
-          {/* ── OVERLAYS ─────────────────────────────────────────────── */}
-          {currentStep.id === "overlays" && (
-            <Category title="Overlays" icon="🎨">
-              <HeadOverlays data={headOverlays} onChange={updateHeadOverlays} />
-            </Category>
-          )}
-
-          {/* ── CHEVEUX ──────────────────────────────────────────────── */}
-          {currentStep.id === "hair" && (
-            <>
-              <Category title="Coiffure" icon="✦">
-                <Slider
-                  label="Style" min={0} max={75} value={hair.style}
-                  onChange={(v) => updateHair({ style: v })}
-                />
-              </Category>
-              <Category title="Couleur principale" icon="🎨">
-                <ColorPicker
-                  label="Couleur" value={hair.color}
-                  onChange={(v) => updateHair({ color: v })}
-                />
-              </Category>
-              <Category title="Reflet / Highlight" icon="✨">
-                <ColorPicker
-                  label="Reflet" value={hair.highlight}
-                  onChange={(v) => updateHair({ highlight: v })}
-                />
-              </Category>
-            </>
-          )}
-
-          {/* ── VÊTEMENTS — AssetPicker visuel ───────────────────────── */}
+          {/* TENUE — AssetPicker visuel */}
           {currentStep.id === "clothing" && (
             <AssetPickerPage
               gender={identity.gender}
-              onPreview={(comps, prps, _overlays) => {
-                // Preview live dans le jeu à chaque sélection
+              onPreview={(comps, prps) => {
                 updateComponents(comps);
                 updateProps(prps);
               }}
-              onValidate={(comps, prps, _overlays) => {
-                // Validation → sauvegarde + étape suivante
+              onValidate={(comps, prps) => {
                 updateComponents(comps);
                 updateProps(prps);
                 nextStep();
@@ -215,27 +170,23 @@ export default function Creator() {
             />
           )}
 
-          {/* ── TATOUAGES ─────────────────────────────────────────────── */}
-          {currentStep.id === "tattoos" && (
-            <Category title="Tatouages" icon="💉">
-              <Tattoos applied={tattoos} onChange={updateTattoos} />
-            </Category>
-          )}
-
         </div>
 
-        {/* ── Navigation — masquée sur l'étape clothing (le bouton valider est dans AssetPicker) */}
-        {currentStep.id !== "clothing" && (
-          <div className={styles.navRow}>
-            <button
-              className={styles.navBtn}
-              onClick={prevStep}
-              disabled={stepIndex === 0 || submitting}
-            >
-              ← Retour
-            </button>
+        {/* ── Navigation ──────────────────────────────────────────────── */}
+        <div className={styles.navRow}>
 
-            {isLastStep ? (
+          {/* Retour toujours visible sauf sur la 1ère étape */}
+          <button
+            className={styles.navBtn}
+            onClick={prevStep}
+            disabled={stepIndex === 0 || submitting}
+          >
+            ← Retour
+          </button>
+
+          {/* Sur clothing : le bouton Valider est dans AssetPicker */}
+          {!isClothingStep && (
+            isLastStep ? (
               <button
                 className={styles.submitBtn}
                 onClick={handleSubmit}
@@ -247,22 +198,10 @@ export default function Creator() {
               <button className={styles.navBtnNext} onClick={nextStep}>
                 Suivant →
               </button>
-            )}
-          </div>
-        )}
+            )
+          )}
 
-        {/* ── Navigation retour uniquement sur l'étape clothing ─────── */}
-        {currentStep.id === "clothing" && (
-          <div className={styles.navRow}>
-            <button
-              className={styles.navBtn}
-              onClick={prevStep}
-              disabled={stepIndex === 0 || submitting}
-            >
-              ← Retour
-            </button>
-          </div>
-        )}
+        </div>
 
       </div>
     </>

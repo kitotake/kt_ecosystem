@@ -107,17 +107,6 @@ export default function AssetPicker({
     getImgSrc,
   } = useAssetPicker({ defaultGender, initialSelections, assetBasePath, onChange });
 
-  // ── Copie du payload JSON ────────────────────────────────────────────────
-  const handleCopy = useCallback(() => {
-    const text = JSON.stringify(getPayload(), null, 2);
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        setToast(true);
-        setTimeout(() => setToast(false), 2000);
-      });
-    }
-  }, [getPayload]);
-
   // ── Validation ────────────────────────────────────────────────────────────
   const handleValidate = useCallback(() => {
     onValidate?.(getPayload());
@@ -221,9 +210,7 @@ export default function AssetPicker({
         </div>
 
         <div className={styles.actionsRow}>
-          <button className={styles.copyBtn} onClick={handleCopy} title="Copier le payload JSON">
-            📋 JSON
-          </button>
+          
           <button
             className={styles.validateBtn}
             onClick={handleValidate}

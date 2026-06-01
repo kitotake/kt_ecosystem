@@ -7,7 +7,7 @@
 .section {
   @include flex-col($spacing-md);
   margin-bottom: $spacing-md;
-  padding: $spacing-lg;
+//  padding: $spacing-lg;
   background: rgba(0, 217, 255, 0.04);
   border: 1px solid rgba(0, 217, 255, 0.08);
   border-radius: $radius-sm;

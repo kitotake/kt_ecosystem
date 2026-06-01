@@ -18,7 +18,8 @@ ui_page 'web/dist/index.html'
 files {
     'web/dist/index.html',
     'web/dist/assets/*.js',
-    'web/dist/assets/*.css'
+    'web/dist/assets/*.css',
+    'web/dist/assets/**/*',
 }
 
 -- FIX : ordre explicite des scripts client — appearance et camera AVANT main

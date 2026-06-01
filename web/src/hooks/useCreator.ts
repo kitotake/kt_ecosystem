@@ -1,6 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// useCreator.ts — Toute la logique du creator (NUI, état, submit, close)
-// Creator.tsx ne fait que le rendu — il ne contient AUCUNE logique métier
+// useCreator.ts — Identité + Tenue uniquement
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { useState, useCallback, useEffect } from "react";
@@ -30,14 +29,10 @@ export interface IdentityData {
   gender: "mp_m_freemode_01" | "mp_f_freemode_01";
 }
 
+// Seulement 2 étapes
 export const STEPS = [
-  { id: "identity", label: "Identité",  icon: "👤", tab: "identity" },
-  { id: "parents",  label: "Parents",   icon: "🧬", tab: "parents"  },
-  { id: "features", label: "Traits",    icon: "◉",  tab: "features" },
-  { id: "overlays", label: "Overlays",  icon: "🎨", tab: "overlays" },
-  { id: "hair",     label: "Cheveux",   icon: "✦",  tab: "hair"     },
-  { id: "clothing", label: "Tenue",     icon: "👔", tab: "clothing" },
-  { id: "tattoos",  label: "Tatouages", icon: "💉", tab: "tattoos"  },
+  { id: "identity", label: "Identité", icon: "👤", tab: "identity" },
+  { id: "clothing", label: "Tenue",    icon: "👔", tab: "clothing" },
 ] as const;
 
 export type StepId = typeof STEPS[number]["id"];
@@ -78,11 +73,13 @@ export function useCreator() {
   const [serverError, setServerError] = useState("");
   const [submitting,  setSubmitting]  = useState(false);
 
-  // ── Données apparence ──────────────────────────────────────────────────
+  // ── Données identité ───────────────────────────────────────────────────
   const [identity, setIdentity] = useState<IdentityData>({
     identifier: "", unique_id: "", firstname: "", lastname: "",
     dateofbirth: "", gender: "mp_m_freemode_01",
   });
+
+  // ── Données apparence (gardées pour le payload final) ──────────────────
   const [headBlend,    setHeadBlend]    = useState<HeadBlend>(DEFAULT_HEAD_BLEND);
   const [faceFeatures, setFaceFeatures] = useState<FaceFeatures>(DEFAULT_FACE_FEATURES);
   const [headOverlays, setHeadOverlays] = useState<HeadOverlays>(DEFAULT_HEAD_OVERLAYS);
@@ -112,11 +109,17 @@ export function useCreator() {
 
   // ── Payload complet ────────────────────────────────────────────────────
   const buildPayload = useCallback(() => ({
-    ...identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos,
+    ...identity,
+    headBlend,
+    faceFeatures,
+    headOverlays,
+    hair,
+    components,
+    props,
+    tattoos,
   }), [identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos]);
 
   // ── Fermeture UI ───────────────────────────────────────────────────────
-  // Appelable même si submitting (on reset avant d'appeler)
   const closeUI = useCallback(async () => {
     setSubmitting(false);
     setServerError("");
@@ -133,6 +136,7 @@ export function useCreator() {
   }, [nuiFetch]);
 
   const nextStep = useCallback(() => {
+    // Validation identité avant de passer à la tenue
     if (stepIndex === 0) {
       const fieldErrors = validateIdentity(identity);
       if (Object.keys(fieldErrors).length > 0) {
@@ -166,7 +170,6 @@ export function useCreator() {
       return;
     }
 
-    // ✅ reset submitting AVANT closeUI (sinon handleClose bailait)
     setSubmitting(false);
     await closeUI();
   }, [identity, buildPayload, nuiFetch, goToStep, closeUI]);
@@ -176,12 +179,12 @@ export function useCreator() {
     nuiFetch("update", patch);
   }, [nuiFetch]);
 
-  // ── Contrôle caméra ───────────────────────────────────────────────────
+  // ── Contrôle caméra ────────────────────────────────────────────────────
   const camControl = useCallback((action: string) => {
     nuiFetch("cameraControl", { action });
   }, [nuiFetch]);
 
-  // ── Mise à jour identity ───────────────────────────────────────────────
+  // ── Mise à jour identité ───────────────────────────────────────────────
   const updateIdentity = useCallback((key: keyof IdentityData, value: string) => {
     setIdentity((prev) => {
       const updated = { ...prev, [key]: value };
@@ -191,30 +194,7 @@ export function useCreator() {
     setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
   }, [sendPreview]);
 
-  // ── Mise à jour apparence ─────────────────────────────────────────────
-  const updateHeadBlend = useCallback((d: HeadBlend) => {
-    setHeadBlend(d);
-    sendPreview({ headBlend: d });
-  }, [sendPreview]);
-
-  const updateFaceFeatures = useCallback((d: FaceFeatures) => {
-    setFaceFeatures(d);
-    sendPreview({ faceFeatures: d });
-  }, [sendPreview]);
-
-  const updateHeadOverlays = useCallback((d: HeadOverlays) => {
-    setHeadOverlays(d);
-    sendPreview({ headOverlays: d });
-  }, [sendPreview]);
-
-  const updateHair = useCallback((patch: Partial<typeof hair>) => {
-    setHair((prev) => {
-      const updated = { ...prev, ...patch };
-      sendPreview({ hair: updated });
-      return updated;
-    });
-  }, [sendPreview]);
-
+  // ── Mise à jour tenue (depuis AssetPicker) ─────────────────────────────
   const updateComponents = useCallback((d: ClothingComponents) => {
     setComponents(d);
     sendPreview({ components: d });
@@ -225,12 +205,18 @@ export function useCreator() {
     sendPreview({ props: d });
   }, [sendPreview]);
 
+  // Ces setters sont conservés pour le payload final même sans UI dédiée
+  const updateHeadBlend    = useCallback((d: HeadBlend)    => { setHeadBlend(d);    sendPreview({ headBlend: d });    }, [sendPreview]);
+  const updateFaceFeatures = useCallback((d: FaceFeatures) => { setFaceFeatures(d); sendPreview({ faceFeatures: d }); }, [sendPreview]);
+  const updateHeadOverlays = useCallback((d: HeadOverlays) => { setHeadOverlays(d); sendPreview({ headOverlays: d }); }, [sendPreview]);
+  const updateHair         = useCallback((patch: Partial<typeof hair>) => {
+    setHair((prev) => { const u = { ...prev, ...patch }; sendPreview({ hair: u }); return u; });
+  }, [sendPreview]);
   const updateTattoos = useCallback((d: Tattoo[]) => {
-    setTattoos(d);
-    sendPreview({ tattoos: d });
+    setTattoos(d); sendPreview({ tattoos: d });
   }, [sendPreview]);
 
-  // ── Écoute messages NUI (Lua → React) ────────────────────────────────
+  // ── Écoute messages NUI ────────────────────────────────────────────────
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const msg = event.data;
@@ -243,7 +229,6 @@ export function useCreator() {
           setErrors({});
           setServerError("");
           setSubmitting(false);
-          // Si skinData fourni (mode /skin), pré-remplir les données
           if (msg.skinData) {
             const s = msg.skinData;
             if (s.headBlend)    setHeadBlend(s.headBlend);
@@ -282,7 +267,7 @@ export function useCreator() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  // ── Fermeture clavier (Echap) ─────────────────────────────────────────
+  // ── Fermeture clavier (Échap) ─────────────────────────────────────────
   useEffect(() => {
     if (!visible) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -294,7 +279,7 @@ export function useCreator() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [visible, closeUI]);
 
-  // ── Utilitaires exposés ────────────────────────────────────────────────
+  // ── Utilitaires ────────────────────────────────────────────────────────
   const getAge = useCallback((): number | null => {
     if (!identity.dateofbirth) return null;
     const age = new Date().getFullYear() - new Date(identity.dateofbirth).getFullYear();
