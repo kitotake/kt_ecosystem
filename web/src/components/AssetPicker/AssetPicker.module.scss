@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ASSET PICKER — STYLES
+// ASSET PICKER — STYLES (redesigned + overlay support)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 @use "../../style/variables" as *;
 @use "../../style/mixins" as *;
@@ -196,10 +196,11 @@
   color: $text;
 }
 
-.panelInfo {
+.panelMeta {
   font-size: $font-size-xs;
   color: $accent;
   font-family: $font-family-mono;
+  opacity: 0.7;
 }
 
 // ── ASSET GRID ────────────────────────────────────────────────────────────
@@ -264,6 +265,15 @@
   width: 100%;
   height: 100%;
   color: $muted;
+}
+
+// Overlay fallback — couleur distincte selon index
+.overlayFallback {
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.06), rgba(108, 92, 231, 0.06));
+
+  .assetItem.selected & {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.18), rgba(108, 92, 231, 0.18));
+  }
 }
 
 .fallbackIcon { font-size: 18px; }
@@ -445,29 +455,11 @@
   align-items: center;
 }
 
-.copyBtn {
-  font-size: $font-size-sm !important;
-  padding: 7px 12px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: $text-secondary !important;
-  transform: none !important;
-  box-shadow: none !important;
-  border-radius: $radius-sm !important;
-  @include flex-row(6px);
-  align-items: center;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: $text !important;
-  }
-}
-
 .validateBtn {
   flex: 1;
   font-size: $font-size-sm !important;
   font-weight: $font-weight-bold !important;
-  padding: 7px 16px !important;
+  padding: 9px 16px !important;
   background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 217, 255, 0.1)) !important;
   border: 1px solid $accent !important;
   color: $accent !important;
@@ -478,18 +470,21 @@
   align-items: center;
   justify-content: center;
   letter-spacing: 0.03em;
+  cursor: pointer;
 
   &:hover {
     background: rgba(0, 217, 255, 0.25) !important;
-    box-shadow: 0 0 16px rgba(0, 217, 255, 0.2) !important;
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.25) !important;
     transform: translateY(-1px) !important;
   }
 
   &:disabled {
-    opacity: 0.35 !important;
+    opacity: 0.3 !important;
     cursor: not-allowed !important;
     transform: none !important;
     box-shadow: none !important;
+    border-color: rgba(0, 217, 255, 0.2) !important;
+    color: $muted !important;
   }
 }
 
@@ -501,27 +496,4 @@
   color: $muted;
   font-size: $font-size-xs;
   font-style: italic;
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: $accent;
-  color: #000;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-bold;
-  padding: 8px 16px;
-  border-radius: $radius-sm;
-  animation: toastIn 0.2s ease, toastOut 0.2s ease 1.8s forwards;
-  z-index: 9999;
-}
-
-@keyframes toastIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes toastOut {
-  to { opacity: 0; transform: translateY(8px); }
 }

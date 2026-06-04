@@ -1,76 +1,96 @@
-@use "../../style/variables" as *;
+@use "../../style/variables.scss" as *;
 @use "../../style/mixins.scss" as *;
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CREATOR PAGE — WIZARD + CAMERA PANEL
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CREATOR PAGE — DESIGN PREMIUM SOMBRE
+// Police : système, tons : noir profond + cyan électrique + violet
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-@keyframes containerSlideIn {
-  from { transform: translateX(-28px); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
+@keyframes panelIn {
+  from { transform: translateX(-24px) scale(0.98); opacity: 0; }
+  to   { transform: translateX(0)     scale(1);    opacity: 1; }
 }
-@keyframes camSlideIn {
-  from { transform: translateX(28px); opacity: 0; }
+@keyframes camIn {
+  from { transform: translateX(20px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
-@keyframes messageSlideIn {
-  from { transform: translateY(-10px); opacity: 0; }
-  to   { transform: translateY(0);     opacity: 1; }
+@keyframes msgIn {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
-@keyframes messageFadeOut {
-  to { opacity: 0; transform: translateY(-10px); }
+@keyframes dotGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(0,217,255,0.4); }
+  50%       { box-shadow: 0 0 16px rgba(0,217,255,0.8), 0 0 30px rgba(0,217,255,0.3); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-// ── MAIN PANEL ────────────────────────────────────────────────────────
+// ── MAIN PANEL ────────────────────────────────────────────────────────────
 .container {
   position: fixed;
   left: $spacing-xl;
   top: $spacing-xl;
-  //width: 370px;
+  width: 380px;
   max-height: calc(100vh - 48px);
-  @include panel;
-  animation: containerSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: linear-gradient(160deg, #13131d 0%, #0d0d16 50%, #0a0a12 100%);
+  border: 1px solid rgba(0, 217, 255, 0.12);
+  border-radius: 16px;
+  animation: panelIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 217, 255, 0.3);
-    border-radius: 2px;
+  // Ligne de lumière en haut
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 217, 255, 0.4), transparent);
+    pointer-events: none;
   }
+
+  &::-webkit-scrollbar { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(0, 217, 255, 0.3); border-radius: 2px; }
 }
 
-// ── CAMERA PANEL (right side) ─────────────────────────────────────────
+// ── CAMERA PANEL ──────────────────────────────────────────────────────────
 .camPanel {
   position: fixed;
   right: $spacing-xl;
   top: 50%;
   transform: translateY(-50%);
-  width: 88px;
-  @include flex-col(6px);
+  width: 80px;
+  @include flex-col(4px);
   align-items: stretch;
-  animation: camSlideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: camIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  background: rgba(10, 10, 18, 0.88);
-  border: 1px solid rgba(0, 217, 255, 0.15);
-  border-radius: $radius-sm;
-  padding: $spacing-sm;
-  
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0,217,255,0.06);
+  background: linear-gradient(160deg, #13131d, #0a0a12);
+  border: 1px solid rgba(0, 217, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px $spacing-xs;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .camTitle {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: $font-weight-bold;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: $muted;
+  color: rgba(0, 217, 255, 0.4);
   text-align: center;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.1);
-  margin-bottom: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
+  margin-bottom: 4px;
 }
 
 .camBtn {
@@ -78,72 +98,60 @@
   align-items: center;
   justify-content: center;
   padding: 7px 4px !important;
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(0, 217, 255, 0.1) !important;
-  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(0, 217, 255, 0.07) !important;
+  border-radius: 8px !important;
   cursor: pointer;
-  transition: $transition !important;
+  transition: all 0.2s ease !important;
   transform: none !important;
   box-shadow: none !important;
   width: 100%;
 
   &:hover {
-    background: rgba(0, 217, 255, 0.14) !important;
-    border-color: rgba(0, 217, 255, 0.4) !important;
-    transform: scale(1.04) !important;
-    box-shadow: 0 0 10px rgba(0, 217, 255, 0.15) !important;
+    background: rgba(0, 217, 255, 0.1) !important;
+    border-color: rgba(0, 217, 255, 0.3) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.15) !important;
   }
-
-  &:active {
-    transform: scale(0.96) !important;
-    background: rgba(0, 217, 255, 0.22) !important;
-  }
+  &:active { transform: scale(0.95) !important; }
 }
 
-.camIcon {
-  font-size: 18px;
-  line-height: 1;
-  color: $accent;
-}
-
+.camIcon { font-size: 16px; line-height: 1; color: $accent; }
 .camLabel {
-  font-size: 9px;
-  color: $muted;
+  font-size: 8px;
+  color: rgba(255,255,255,0.3);
   text-align: center;
   line-height: 1.2;
   font-weight: $font-weight-semibold;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
-// ── STEP PROGRESS BAR ─────────────────────────────────────────────────
+// ── STEP BAR ──────────────────────────────────────────────────────────────
 .stepBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 40px;
   position: relative;
-  padding: $spacing-md $spacing-lg $spacing-sm;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
+  padding: 20px $spacing-lg 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   flex-shrink: 0;
 
-  // track line behind dots
   &::before {
     content: '';
     position: absolute;
-    left: calc($spacing-lg + 14px);
-    right: calc($spacing-lg + 14px);
-    top: calc($spacing-md + 14px);
+    left: calc(50% - 36px);
+    right: calc(50% - 36px);
+    top: calc(20px + 16px);
     height: 1px;
-    background: rgba(0, 217, 255, 0.12);
-    z-index: 0;
+    background: linear-gradient(90deg, rgba(0,217,255,0.2), rgba(108,92,231,0.2));
   }
 }
-
-
 
 .stepDot {
   position: relative;
   z-index: 1;
-  @include flex-col(4px);
+  @include flex-col(6px);
   align-items: center;
   background: transparent !important;
   border: none !important;
@@ -151,60 +159,55 @@
   cursor: default !important;
   transform: none !important;
   box-shadow: none !important;
-  width: 28px;
-  flex-shrink: 0;
+  width: 36px;
 }
 
 .stepDotIcon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(0, 217, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  color: $muted;
-  transition: $transition;
-  line-height: 1;
+  font-size: 13px;
+  color: rgba(255,255,255,0.25);
+  transition: all 0.3s ease;
 }
 
 .stepDotLabel {
-  font-size: 8px;
-  letter-spacing: 0.05em;
+  font-size: 9px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: $muted;
+  color: rgba(255,255,255,0.2);
   text-align: center;
   white-space: nowrap;
-  transition: $transition;
+  transition: all 0.3s ease;
 }
 
 .stepDone {
   cursor: pointer !important;
-
   .stepDotIcon {
-    background: rgba(0, 217, 255, 0.12);
-    border-color: rgba(0, 217, 255, 0.3);
-    color: $accent;
-    font-size: 10px;
+    background: rgba(0, 217, 255, 0.08);
+    border-color: rgba(0, 217, 255, 0.25);
+    color: rgba(0, 217, 255, 0.7);
+    font-size: 12px;
   }
-  .stepDotLabel { color: rgba(0, 217, 255, 0.6); }
-
+  .stepDotLabel { color: rgba(0, 217, 255, 0.5); }
   &:hover .stepDotIcon {
-    background: rgba(0, 217, 255, 0.2);
+    background: rgba(0, 217, 255, 0.15);
     border-color: $accent;
   }
 }
 
 .stepActive {
   .stepDotIcon {
-    background: $accent;
+    background: linear-gradient(135deg, rgba(0,217,255,0.25), rgba(108,92,231,0.15));
     border-color: $accent;
-    color: #000;
+    color: $accent;
     font-weight: $font-weight-bold;
-    box-shadow: 0 0 12px rgba(0, 217, 255, 0.5);
-    animation: glow 2s ease-in-out infinite;
+    animation: dotGlow 2s ease-in-out infinite;
   }
   .stepDotLabel {
     color: $accent;
@@ -212,28 +215,49 @@
   }
 }
 
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(0,217,255,0.4); }
-  50%       { box-shadow: 0 0 18px rgba(0,217,255,0.7); }
-}
-
-// ── STEP HEADER ───────────────────────────────────────────────────────
+// ── STEP HEADER ───────────────────────────────────────────────────────────
 .stepHeader {
-  @include flex-row($spacing-sm);
+  @include flex-between;
   align-items: center;
-  justify-content: space-between;
-  padding: $spacing-sm $spacing-lg $spacing-xs;
+  padding: 14px $spacing-lg $spacing-xs;
   flex-shrink: 0;
 }
 
+.stepNum {
+  font-size: 10px;
+  font-family: $font-family-mono;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.1em;
+  background: rgba(255,255,255,0.04);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.stepTitle {
+  font-size: 15px;
+  font-weight: $font-weight-bold;
+  color: $text;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+
+  // Gradient text
+  background: linear-gradient(135deg, #ffffff 0%, rgba(0,217,255,0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .closeBtn {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50% !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  color: $text-secondary !important;
-  font-size: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: rgba(255,255,255,0.4) !important;
+  font-size: 18px !important;
   line-height: 1 !important;
   display: flex;
   align-items: center;
@@ -241,38 +265,17 @@
   padding: 0 !important;
   transform: none !important;
   box-shadow: none !important;
-  transition: $transition !important;
+  transition: all 0.2s ease !important;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 87, 87, 0.12) !important;
-    border-color: rgba(255, 87, 87, 0.35) !important;
-    color: #ff8f8f !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #ff7070 !important;
   }
-
-  &:disabled {
-    opacity: 0.4 !important;
-    cursor: not-allowed !important;
-  }
+  &:disabled { opacity: 0.3 !important; cursor: not-allowed !important; }
 }
 
-.stepNum {
-  font-size: $font-size-xs;
-  font-family: $font-family-mono;
-  color: $muted;
-  letter-spacing: 0.08em;
-}
-
-.stepTitle {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-bold;
-  color: $text;
-  letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-}
-
-// ── STEP CONTENT (scrollable zone) ────────────────────────────────────
+// ── STEP CONTENT ──────────────────────────────────────────────────────────
 .stepContent {
   flex: 1;
   overflow-y: auto;
@@ -280,165 +283,198 @@
   padding: 0 $spacing-md $spacing-sm;
   min-height: 0;
 
-  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar { width: 3px; }
   &::-webkit-scrollbar-track { background: transparent; }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0, 217, 255, 0.25);
-    border-radius: 2px;
-  }
+  &::-webkit-scrollbar-thumb { background: rgba(0, 217, 255, 0.2); border-radius: 2px; }
 }
 
-// ── NAV ROW ───────────────────────────────────────────────────────────
+// ── NAV ROW ───────────────────────────────────────────────────────────────
 .navRow {
   @include flex-row($spacing-sm);
   align-items: center;
   justify-content: space-between;
   padding: $spacing-sm $spacing-md $spacing-md;
-  border-top: 1px solid rgba(0, 217, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .navBtn {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: $text-secondary !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255,255,255,0.4) !important;
   font-size: $font-size-sm !important;
   padding: $spacing-sm $spacing-md !important;
   transform: none !important;
   box-shadow: none !important;
-  transition: $transition !important;
+  transition: all 0.2s ease !important;
   border-radius: $radius-sm !important;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: $text-secondary !important;
     transform: none !important;
-    box-shadow: none !important;
   }
-
-  &:disabled {
-    opacity: 0.3 !important;
-    cursor: not-allowed !important;
-  }
+  &:disabled { opacity: 0.25 !important; cursor: not-allowed !important; }
 }
 
 .navBtnNext {
-  background: rgba(0, 217, 255, 0.15) !important;
-  border: 1px solid rgba(0, 217, 255, 0.35) !important;
+  background: rgba(0, 217, 255, 0.1) !important;
+  border: 1px solid rgba(0, 217, 255, 0.3) !important;
   color: $accent !important;
   font-size: $font-size-sm !important;
   font-weight: $font-weight-bold !important;
   padding: $spacing-sm $spacing-lg !important;
   transform: none !important;
   box-shadow: none !important;
-  transition: $transition !important;
+  transition: all 0.2s ease !important;
   border-radius: $radius-sm !important;
+  letter-spacing: 0.02em;
 
   &:hover {
-    background: rgba(0, 217, 255, 0.25) !important;
-    border-color: $accent !important;
-    box-shadow: 0 0 16px rgba(0, 217, 255, 0.2) !important;
+    background: rgba(0, 217, 255, 0.2) !important;
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.2) !important;
     transform: translateY(-1px) !important;
   }
 }
 
-// ── SUBMIT ────────────────────────────────────────────────────────────
+// ── SUBMIT ────────────────────────────────────────────────────────────────
 .submitBtn {
   flex: 1;
-  padding: $spacing-sm $spacing-lg !important;
-  background: linear-gradient(135deg, $accent, $accent-light) !important;
-  border: none !important;
+  padding: 10px $spacing-lg !important;
+  background: linear-gradient(135deg, rgba(0,217,255,0.2), rgba(108,92,231,0.15)) !important;
+  border: 1px solid rgba(0, 217, 255, 0.35) !important;
   border-radius: $radius-sm !important;
-  color: #000 !important;
+  color: $accent !important;
   font-size: $font-size-sm !important;
   font-weight: $font-weight-bold !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
   cursor: pointer;
-  transition: $transition !important;
+  transition: all 0.25s ease !important;
   position: relative;
   overflow: hidden;
-  box-shadow: $shadow-glow !important;
   transform: none !important;
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.1) !important;
+
+  // shimmer
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+    pointer-events: none;
+  }
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0,217,255,0.3), rgba(108,92,231,0.25)) !important;
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.25), 0 8px 24px rgba(0,0,0,0.4) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  &:disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    &::after { display: none; }
+  }
+}
+
+// ── MESSAGES ──────────────────────────────────────────────────────────────
+.error {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-xs;
+  margin: $spacing-xs $spacing-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  animation: msgIn 0.25s ease-out;
+  flex-shrink: 0;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-left: 3px solid #ef4444;
+  color: #ff8080;
+}
+
+.success {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-xs;
+  margin: $spacing-xs $spacing-md;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  animation: msgIn 0.25s ease-out;
+  flex-shrink: 0;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-left: 3px solid #10b981;
+  color: #6ee7b7;
+}
+
+// ── GENDER PICKER ─────────────────────────────────────────────────────────
+.genderRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-sm;
+}
+
+.genderBtn {
+  @include flex-col(6px);
+  align-items: center;
+  justify-content: center;
+  padding: 18px $spacing-sm !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  transition: all 0.2s ease !important;
+  transform: none !important;
+  box-shadow: none !important;
+  position: relative;
+  overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.5s ease;
+    background: linear-gradient(135deg, rgba(0,217,255,0.06), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
 
   &:hover {
-    background: linear-gradient(135deg, $accent-light, $accent) !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(0, 217, 255, 0.2) !important;
     transform: translateY(-2px) !important;
-    box-shadow: $shadow-xl, 0 0 32px rgba(0, 217, 255, 0.4) !important;
-
-    &::before { transform: translateX(100%); }
-  }
-
-  &:active { transform: translateY(0) !important; }
-}
-
-// ── MESSAGES ──────────────────────────────────────────────────────────
-.error, .success {
-  padding: $spacing-sm $spacing-md;
-  border-radius: $radius-sm;
-  margin: $spacing-xs $spacing-md;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  animation: messageSlideIn 0.25s ease-out;
-  flex-shrink: 0;
-}
-
-.error {
-  background: rgba($error, 0.12);
-  border: 1px solid rgba($error, 0.3);
-  color: #ff6b6b;
-}
-
-.success {
-  background: rgba($success, 0.12);
-  border: 1px solid rgba($success, 0.3);
-  color: #51cf66;
-  animation: messageSlideIn 0.25s ease-out, messageFadeOut 0.25s ease-in 2.75s forwards;
-}
-
-// ── GENDER PICKER ─────────────────────────────────────────────────────
-.genderRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: $spacing-md;
-}
-
-.genderBtn {
-  @include flex-col(8px);
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-md $spacing-sm !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 2px solid rgba(0, 217, 255, 0.15) !important;
-  border-radius: $radius-sm !important;
-  cursor: pointer;
-  transition: $transition !important;
-  transform: none !important;
-  box-shadow: none !important;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.06) !important;
-    border-color: rgba(0, 217, 255, 0.3) !important;
-    transform: translateY(-2px) !important;
+    &::before { opacity: 1; }
   }
 
   &.genderActive {
-    background: rgba(0, 217, 255, 0.15) !important;
-    border-color: $accent !important;
-    box-shadow: 0 0 18px rgba(0, 217, 255, 0.2) !important;
+    background: rgba(0, 217, 255, 0.08) !important;
+    border-color: rgba(0, 217, 255, 0.35) !important;
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.12) !important;
     transform: none !important;
+    &::before { opacity: 1; }
   }
 }
 
-.genderIcon  { font-size: 28px; line-height: 1; color: $accent; }
-.genderLabel { font-size: $font-size-md; font-weight: $font-weight-bold; color: $text; }
-.genderSub   { font-size: $font-size-xs; color: $muted; font-family: $font-family-mono; letter-spacing: 0.05em; }
+.genderIcon {
+  font-size: 26px;
+  line-height: 1;
+  color: $accent;
+  filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.4));
+}
+
+.genderLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $text;
+  letter-spacing: 0.02em;
+}
+
+.genderSub {
+  font-size: $font-size-xs;
+  color: rgba(255,255,255,0.2);
+  font-family: $font-family-mono;
+  letter-spacing: 0.08em;
+}

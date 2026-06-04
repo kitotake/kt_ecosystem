@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Creator.tsx — Identité + Tenue uniquement
+// Creator.tsx — Fixed: Valider sur clothing → handleSubmit
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import styles from "./Creator.module.scss";
@@ -24,7 +24,7 @@ const CAM_BUTTONS = [
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function Creator() {
   const {
-    visible, stepIndex, errors, serverError, submitting, isLastStep, currentStep,
+    visible, stepIndex, errors, serverError, submitting, currentStep,
     identity,
     closeUI, goToStep, nextStep, prevStep, handleSubmit, camControl, getAge,
     updateIdentity, updateComponents, updateProps,
@@ -32,7 +32,6 @@ export default function Creator() {
 
   if (!visible) return null;
 
-  // Uniquement les 2 étapes utiles
   const ACTIVE_STEPS = STEPS.filter((s) =>
     s.id === "identity" || s.id === "clothing"
   );
@@ -60,7 +59,7 @@ export default function Creator() {
       {/* ── Panneau principal ───────────────────────────────────────────── */}
       <div className={styles.container}>
 
-        {/* Step progress bar — seulement les 2 étapes actives */}
+        {/* Step progress bar */}
         <div className={styles.stepBar}>
           {ACTIVE_STEPS.map((s, i) => (
             <button
@@ -77,7 +76,6 @@ export default function Creator() {
               <span className={styles.stepDotLabel}>{s.label}</span>
             </button>
           ))}
-         
         </div>
 
         {/* Step header */}
@@ -154,7 +152,8 @@ export default function Creator() {
             </>
           )}
 
-          {/* TENUE — AssetPicker visuel */}
+          {/* TENUE — AssetPicker visuel
+              onValidate : sauvegarde les données ET crée le personnage  */}
           {currentStep.id === "clothing" && (
             <AssetPickerPage
               gender={identity.gender}
@@ -165,7 +164,8 @@ export default function Creator() {
               onValidate={(comps, prps) => {
                 updateComponents(comps);
                 updateProps(prps);
-                nextStep();
+                // On submit directement depuis le bouton "Valider la tenue"
+                void handleSubmit();
               }}
             />
           )}
@@ -175,7 +175,6 @@ export default function Creator() {
         {/* ── Navigation ──────────────────────────────────────────────── */}
         <div className={styles.navRow}>
 
-          {/* Retour toujours visible sauf sur la 1ère étape */}
           <button
             className={styles.navBtn}
             onClick={prevStep}
@@ -184,21 +183,23 @@ export default function Creator() {
             ← Retour
           </button>
 
-          {/* Sur clothing : le bouton Valider est dans AssetPicker */}
-          {!isClothingStep && (
-            isLastStep ? (
-              <button
-                className={styles.submitBtn}
-                onClick={handleSubmit}
-                disabled={submitting}
-              >
-                {submitting ? "⏳ Création..." : "✓ Créer le personnage"}
-              </button>
-            ) : (
-              <button className={styles.navBtnNext} onClick={nextStep}>
-                Suivant →
-              </button>
-            )
+          {/* Sur identity : bouton Suivant */}
+          {currentStep.id === "identity" && (
+            <button className={styles.navBtnNext} onClick={nextStep}>
+              Suivant →
+            </button>
+          )}
+
+          {/* Sur clothing : le bouton Valider est DANS AssetPicker,
+              mais on ajoute aussi un bouton de secours ici */}
+          {isClothingStep && (
+            <button
+              className={styles.submitBtn}
+              onClick={() => void handleSubmit()}
+              disabled={submitting}
+            >
+              {submitting ? "⏳ Création..." : "✓ Créer le personnage"}
+            </button>
           )}
 
         </div>

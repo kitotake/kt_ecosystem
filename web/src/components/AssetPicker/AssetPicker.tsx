@@ -1,8 +1,9 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ASSET PICKER — COMPOSANT PRINCIPAL
+// ASSET PICKER — COMPOSANT PRINCIPAL (fixed TS6133 + overlays UI)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { useState, useCallback, memo } from "react";
+import { useCallback, memo } from "react";
+import { useState } from "react";
 import styles from "./AssetPicker.module.scss";
 import { useAssetPicker } from "./useAssetPicker";
 import { CATEGORIES, CATEGORY_GROUPS } from "./assetPicker.data";
@@ -15,11 +16,22 @@ interface AssetItemProps {
   index: number;
   imgSrc: string;
   selected: boolean;
+  isOverlay: boolean;
+  isDirect: boolean;
   onPick: (index: number) => void;
 }
 
-const AssetItem = memo(({ index, imgSrc, selected, onPick }: AssetItemProps) => {
+const AssetItem = memo(({ index, imgSrc, selected, isOverlay, isDirect, onPick }: AssetItemProps) => {
   const [imgFailed, setImgFailed] = useState(false);
+
+  // Pour overlays et directs, on montre toujours un fallback stylisé
+  const showFallback = imgFailed || isOverlay || isDirect;
+
+  const overlayEmojis: Record<number, string> = {
+    0: "🎨", 1: "🧔", 2: "👁", 3: "🕰", 4: "💄",
+    5: "🌸", 6: "💧", 7: "☀️", 8: "👄", 9: "✨",
+    10: "🦲", 11: "🩹", 12: "🩺",
+  };
 
   return (
     <div
@@ -31,10 +43,23 @@ const AssetItem = memo(({ index, imgSrc, selected, onPick }: AssetItemProps) => 
       onKeyDown={(e) => e.key === "Enter" && onPick(index)}
     >
       <div className={styles.imgWrap}>
-        {imgFailed ? (
-          <div className={styles.imgFallback}>
-            <span className={styles.fallbackIcon}>🖼️</span>
-            <span className={styles.fallbackIdx}>#{index}</span>
+        {showFallback ? (
+          <div className={`${styles.imgFallback} ${isOverlay ? styles.overlayFallback : ""}`}>
+            {isOverlay ? (
+              <>
+                <span className={styles.fallbackIcon}>
+                  {index === 0 ? "🚫" : "✦"}
+                </span>
+                <span className={styles.fallbackIdx}>
+                  {index === 0 ? "Aucun" : `#${index}`}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className={styles.fallbackIcon}>🖼️</span>
+                <span className={styles.fallbackIdx}>#{index}</span>
+              </>
+            )}
           </div>
         ) : (
           <img
@@ -45,7 +70,9 @@ const AssetItem = memo(({ index, imgSrc, selected, onPick }: AssetItemProps) => 
           />
         )}
       </div>
-      <div className={styles.itemLabel}>#{index}</div>
+      <div className={styles.itemLabel}>
+        {index === 0 && isOverlay ? "Aucun" : `#${index}`}
+      </div>
       {selected && <div className={styles.checkBadge}>✓</div>}
     </div>
   );
@@ -62,19 +89,26 @@ interface AssetGridProps {
   onPick: (catId: string, index: number) => void;
 }
 
-const AssetGrid = memo(({ cat, selectedIndex, getImgSrc, onPick }: AssetGridProps) => (
-  <div className={styles.assetGrid}>
-    {Array.from({ length: cat.count }, (_, i) => (
-      <AssetItem
-        key={i}
-        index={i}
-        imgSrc={getImgSrc(cat, i)}
-        selected={selectedIndex === i}
-        onPick={(idx) => onPick(cat.id, idx)}
-      />
-    ))}
-  </div>
-));
+const AssetGrid = memo(({ cat, selectedIndex, getImgSrc, onPick }: AssetGridProps) => {
+  const isOverlay = cat.overlayId != null;
+  const isDirect  = cat.direct === true;
+
+  return (
+    <div className={styles.assetGrid}>
+      {Array.from({ length: cat.count }, (_, i) => (
+        <AssetItem
+          key={i}
+          index={i}
+          imgSrc={getImgSrc(cat, i)}
+          selected={selectedIndex === i}
+          isOverlay={isOverlay}
+          isDirect={isDirect}
+          onPick={(idx) => onPick(cat.id, idx)}
+        />
+      ))}
+    </div>
+  );
+});
 AssetGrid.displayName = "AssetGrid";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -87,7 +121,6 @@ export default function AssetPicker({
   onValidate,
   assetBasePath = "./assets",
 }: AssetPickerProps) {
-  const [toast, setToast] = useState(false);
 
   const {
     gender,
@@ -165,8 +198,8 @@ export default function AssetPicker({
             Cliquez sur une miniature pour la sélectionner
           </div>
           <div className={styles.actionsRow}>
-            <button className={styles.validateBtn} disabled>
-              ✓ Valider la sélection
+            <button className={styles.validateBtn} disabled onClick={handleValidate}>
+              ✓ Valider la tenue
             </button>
           </div>
         </div>
@@ -210,13 +243,12 @@ export default function AssetPicker({
         </div>
 
         <div className={styles.actionsRow}>
-          
           <button
             className={styles.validateBtn}
             onClick={handleValidate}
             disabled={entries.length === 0}
           >
-            ✓ Valider la sélection ({entries.length})
+            ✓ Valider la tenue ({entries.length})
           </button>
         </div>
       </div>
@@ -270,9 +302,12 @@ export default function AssetPicker({
             <span className={styles.panelTitle}>
               {activeCat ? `${activeCat.icon} ${activeCat.label}` : "Choisir une catégorie"}
             </span>
-            {activeCat && currentSel[activeCat.id] !== undefined && (
-              <span className={styles.panelInfo}>
-                Sélectionné : #{currentSel[activeCat.id]}
+            {activeCat && (
+              <span className={styles.panelMeta}>
+                {activeCat.overlayId != null ? "overlay" :
+                 activeCat.propAnchor != null ? "prop" :
+                 activeCat.componentId != null ? `comp ${activeCat.componentId}` : "direct"}
+                {currentSel[activeCat.id] !== undefined && ` · #${currentSel[activeCat.id]}`}
               </span>
             )}
           </div>
@@ -301,9 +336,6 @@ export default function AssetPicker({
           {renderSelBar()}
         </div>
       </div>
-
-      {/* Toast copie */}
-      {toast && <div className={styles.toast}>✓ JSON copié dans le presse-papier</div>}
     </div>
   );
 }
