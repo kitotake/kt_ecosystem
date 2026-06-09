@@ -4,7 +4,7 @@
 
 export { default as AssetPicker } from "./AssetPicker";
 export { useAssetPicker } from "./useAssetPicker";
-export { CATEGORIES, CATEGORY_GROUPS } from "./assetPicker.data";
+export { CATEGORIES, CATEGORY_GROUPS, HAIR_COLORS, MAKEUP_COLORS } from "./assetPicker.data";
 export type {
   AssetCategory,
   AssetPayload,
@@ -12,4 +12,5 @@ export type {
   GenderModel,
   GenderSelections,
   PickerSelection,
+  ItemSelection,
 } from "./assetPicker.types";

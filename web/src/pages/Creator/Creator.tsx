@@ -1,53 +1,51 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// Creator.tsx — Fixed: Valider sur clothing → handleSubmit
+// Creator.tsx — Wizard identité + tenue
+// SCSS propre : Creator.module.scss (wizard) / AssetPickerPage.module.scss (tenue)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import styles from "./Creator.module.scss";
 import { useCreator, STEPS } from "../../hooks/useCreator";
-
 import Category        from "../../components/Category/Category";
 import Field           from "../../components/Field/Field";
 import AssetPickerPage from "../AssetPickerPage/AssetPickerPage";
 
 // ─── Boutons caméra ───────────────────────────────────────────────────────
 const CAM_BUTTONS = [
-  { action: "rotateLeft",  icon: "↺", label: "Gauche", title: "Tourner à gauche" },
-  { action: "rotateRight", icon: "↻", label: "Droite", title: "Tourner à droite" },
-  { action: "zoomIn",      icon: "⊕", label: "Zoom +", title: "Zoom avant"       },
-  { action: "zoomOut",     icon: "⊖", label: "Zoom -", title: "Zoom arrière"     },
-  { action: "focusHead",   icon: "◯", label: "Tête",   title: "Focus visage"     },
-  { action: "focusBody",   icon: "▭", label: "Corps",  title: "Focus corps"      },
-  { action: "focusFull",   icon: "▬", label: "Entier", title: "Vue entière"      },
-  { action: "resetCam",    icon: "⌖", label: "Reset",  title: "Réinitialiser"    },
-];
+  { action: "rotateLeft",  icon: "↺", label: "Gauche" },
+  { action: "rotateRight", icon: "↻", label: "Droite" },
+  { action: "zoomIn",      icon: "⊕", label: "Zoom +" },
+  { action: "zoomOut",     icon: "⊖", label: "Zoom -" },
+  { action: "focusHead",   icon: "◯", label: "Tête"   },
+  { action: "focusBody",   icon: "▭", label: "Corps"  },
+  { action: "focusFull",   icon: "▬", label: "Entier" },
+  { action: "resetCam",    icon: "⌖", label: "Reset"  },
+] as const;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function Creator() {
   const {
-    visible, stepIndex, errors, serverError, submitting, currentStep,
+    visible, stepIndex, errors, serverError, submitting, isLastStep, currentStep,
     identity,
     closeUI, goToStep, nextStep, prevStep, handleSubmit, camControl, getAge,
-    updateIdentity, updateComponents, updateProps,
+    updateIdentity, updateComponents, updateProps, updateHeadOverlays,
   } = useCreator();
 
   if (!visible) return null;
 
-  const ACTIVE_STEPS = STEPS.filter((s) =>
-    s.id === "identity" || s.id === "clothing"
-  );
-  const activeIndex = ACTIVE_STEPS.findIndex((s) => s.id === currentStep.id);
+  const ACTIVE_STEPS = STEPS.filter((s) => s.id === "identity" || s.id === "clothing");
+  const activeIndex    = ACTIVE_STEPS.findIndex((s) => s.id === currentStep.id);
   const isClothingStep = currentStep.id === "clothing";
 
   return (
     <>
-      {/* ── Panneau caméra ─────────────────────────────────────────────── */}
+      {/* ── Panneau caméra ───────────────────────────────────────────── */}
       <div className={styles.camPanel}>
         <span className={styles.camTitle}>CAMÉRA</span>
         {CAM_BUTTONS.map((btn) => (
           <button
             key={btn.action}
             className={styles.camBtn}
-            title={btn.title}
+            title={btn.label}
             onClick={() => camControl(btn.action)}
           >
             <span className={styles.camIcon}>{btn.icon}</span>
@@ -56,10 +54,10 @@ export default function Creator() {
         ))}
       </div>
 
-      {/* ── Panneau principal ───────────────────────────────────────────── */}
+      {/* ── Panneau principal ─────────────────────────────────────────── */}
       <div className={styles.container}>
 
-        {/* Step progress bar */}
+        {/* ── Barre de progression ── */}
         <div className={styles.stepBar}>
           {ACTIVE_STEPS.map((s, i) => (
             <button
@@ -72,54 +70,74 @@ export default function Creator() {
               onClick={() => i < activeIndex && goToStep(STEPS.findIndex((x) => x.id === s.id))}
               title={s.label}
             >
-              <span className={styles.stepDotIcon}>{i < activeIndex ? "✓" : s.icon}</span>
+              <span className={styles.stepDotIcon}>
+                {i < activeIndex ? "✓" : s.icon}
+              </span>
               <span className={styles.stepDotLabel}>{s.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Step header */}
+        {/* ── Header étape ── */}
         <div className={styles.stepHeader}>
-          <span className={styles.stepNum}>{activeIndex + 1} / {ACTIVE_STEPS.length}</span>
+          <span className={styles.stepNum}>{activeIndex + 1}/{ACTIVE_STEPS.length}</span>
           <h2 className={styles.stepTitle}>
-            <span>{currentStep.icon}</span> {currentStep.label}
+            <span>{currentStep.icon}</span>
+            {currentStep.label}
           </h2>
           <button
             type="button"
             className={styles.closeBtn}
             onClick={() => void closeUI()}
             disabled={submitting}
-            title="Fermer"
+            aria-label="Fermer"
           >
             ×
           </button>
         </div>
 
-        {/* Messages erreur serveur */}
-        {serverError && <div className={styles.error}>{serverError}</div>}
+        {/* ── Erreur serveur ── */}
+        {serverError && (
+          <div className={styles.error}>{serverError}</div>
+        )}
 
-        {/* ── Contenu ─────────────────────────────────────────────────── */}
-        <div className={styles.stepContent}>
+        {/* ── Contenu scrollable ──
+            Sur l'étape clothing on retire le padding pour que
+            AssetPickerPage occupe tout l'espace ── */}
+        <div className={[
+          styles.stepContent,
+          isClothingStep ? styles.noPad : "",
+        ].join(" ")}>
 
-          {/* IDENTITÉ */}
+          {/* ÉTAPE 1 — IDENTITÉ */}
           {currentStep.id === "identity" && (
             <>
               <Category title="État civil" icon="👤">
                 <Field
-                  label="Prénom" type="text" value={identity.firstname}
+                  label="Prénom"
+                  type="text"
+                  value={identity.firstname}
                   onChange={(v) => updateIdentity("firstname", v)}
-                  placeholder="ex: Jean" required error={errors.firstname}
+                  placeholder="ex: Jean"
+                  required
+                  error={errors.firstname}
                 />
                 <Field
-                  label="Nom" type="text" value={identity.lastname}
+                  label="Nom"
+                  type="text"
+                  value={identity.lastname}
                   onChange={(v) => updateIdentity("lastname", v)}
-                  placeholder="ex: Dupont" required error={errors.lastname}
+                  placeholder="ex: Dupont"
+                  required
+                  error={errors.lastname}
                 />
                 <Field
-                  label={`Date de naissance${getAge() ? ` (${getAge()} ans)` : ""}`}
-                  type="date" value={identity.dateofbirth}
+                  label={`Date de naissance${getAge() !== null ? ` — ${getAge()} ans` : ""}`}
+                  type="date"
+                  value={identity.dateofbirth}
                   onChange={(v) => updateIdentity("dateofbirth", v)}
-                  required error={errors.dateofbirth}
+                  required
+                  error={errors.dateofbirth}
                 />
               </Category>
 
@@ -152,29 +170,32 @@ export default function Creator() {
             </>
           )}
 
-          {/* TENUE — AssetPicker visuel
-              onValidate : sauvegarde les données ET crée le personnage  */}
+          {/* ÉTAPE 2 — TENUE */}
           {currentStep.id === "clothing" && (
             <AssetPickerPage
               gender={identity.gender}
-              onPreview={(comps, prps) => {
+              onPreview={(comps, prps, overlays) => {
                 updateComponents(comps);
                 updateProps(prps);
+                updateHeadOverlays(overlays);
               }}
-              onValidate={(comps, prps) => {
+              onValidate={(comps, prps, overlays) => {
                 updateComponents(comps);
                 updateProps(prps);
-                // On submit directement depuis le bouton "Valider la tenue"
-                void handleSubmit();
+                updateHeadOverlays(overlays);
+                if (!isLastStep) nextStep();
+                else void handleSubmit();
+              }}
+              onClearAll={() => {
+                updateComponents({});
+                updateProps({});
               }}
             />
           )}
-
         </div>
 
-        {/* ── Navigation ──────────────────────────────────────────────── */}
+        {/* ── Navigation ── */}
         <div className={styles.navRow}>
-
           <button
             className={styles.navBtn}
             onClick={prevStep}
@@ -183,25 +204,34 @@ export default function Creator() {
             ← Retour
           </button>
 
-          {/* Sur identity : bouton Suivant */}
-          {currentStep.id === "identity" && (
+          {/* Étape identité → Suivant */}
+          {!isClothingStep && !isLastStep && (
             <button className={styles.navBtnNext} onClick={nextStep}>
               Suivant →
             </button>
           )}
 
-          {/* Sur clothing : le bouton Valider est DANS AssetPicker,
-              mais on ajoute aussi un bouton de secours ici */}
-          {isClothingStep && (
+          {/* Étape clothing si dernière → Créer */}
+          {isClothingStep && isLastStep && (
             <button
               className={styles.submitBtn}
-              onClick={() => void handleSubmit()}
+              onClick={handleSubmit}
               disabled={submitting}
             >
               {submitting ? "⏳ Création..." : "✓ Créer le personnage"}
             </button>
           )}
 
+          {/* Étape identité si dernière (cas edge) → Créer */}
+          {!isClothingStep && isLastStep && (
+            <button
+              className={styles.submitBtn}
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? "⏳ Création..." : "✓ Créer le personnage"}
+            </button>
+          )}
         </div>
 
       </div>

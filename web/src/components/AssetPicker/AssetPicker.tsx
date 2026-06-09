@@ -1,13 +1,12 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ASSET PICKER — COMPOSANT PRINCIPAL (fixed TS6133 + overlays UI)
+// ASSET PICKER — COMPOSANT v2 (texture + color)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-import { useCallback, memo } from "react";
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import styles from "./AssetPicker.module.scss";
 import { useAssetPicker } from "./useAssetPicker";
-import { CATEGORIES, CATEGORY_GROUPS } from "./assetPicker.data";
-import type { AssetPickerProps, AssetCategory } from "./assetPicker.types";
+import { CATEGORIES, CATEGORY_GROUPS, HAIR_COLORS, MAKEUP_COLORS } from "./assetPicker.data";
+import type { AssetPickerProps, AssetCategory, ItemSelection } from "./assetPicker.types";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SUB — AssetItem
@@ -16,22 +15,11 @@ interface AssetItemProps {
   index: number;
   imgSrc: string;
   selected: boolean;
-  isOverlay: boolean;
-  isDirect: boolean;
   onPick: (index: number) => void;
 }
 
-const AssetItem = memo(({ index, imgSrc, selected, isOverlay, isDirect, onPick }: AssetItemProps) => {
+const AssetItem = memo(({ index, imgSrc, selected, onPick }: AssetItemProps) => {
   const [imgFailed, setImgFailed] = useState(false);
-
-  // Pour overlays et directs, on montre toujours un fallback stylisé
-  const showFallback = imgFailed || isOverlay || isDirect;
-
-  const overlayEmojis: Record<number, string> = {
-    0: "🎨", 1: "🧔", 2: "👁", 3: "🕰", 4: "💄",
-    5: "🌸", 6: "💧", 7: "☀️", 8: "👄", 9: "✨",
-    10: "🦲", 11: "🩹", 12: "🩺",
-  };
 
   return (
     <div
@@ -43,23 +31,10 @@ const AssetItem = memo(({ index, imgSrc, selected, isOverlay, isDirect, onPick }
       onKeyDown={(e) => e.key === "Enter" && onPick(index)}
     >
       <div className={styles.imgWrap}>
-        {showFallback ? (
-          <div className={`${styles.imgFallback} ${isOverlay ? styles.overlayFallback : ""}`}>
-            {isOverlay ? (
-              <>
-                <span className={styles.fallbackIcon}>
-                  {index === 0 ? "🚫" : "✦"}
-                </span>
-                <span className={styles.fallbackIdx}>
-                  {index === 0 ? "Aucun" : `#${index}`}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className={styles.fallbackIcon}>🖼️</span>
-                <span className={styles.fallbackIdx}>#{index}</span>
-              </>
-            )}
+        {imgFailed ? (
+          <div className={styles.imgFallback}>
+            <span className={styles.fallbackIcon}>🖼️</span>
+            <span className={styles.fallbackIdx}>#{index}</span>
           </div>
         ) : (
           <img
@@ -70,9 +45,7 @@ const AssetItem = memo(({ index, imgSrc, selected, isOverlay, isDirect, onPick }
           />
         )}
       </div>
-      <div className={styles.itemLabel}>
-        {index === 0 && isOverlay ? "Aucun" : `#${index}`}
-      </div>
+      <div className={styles.itemLabel}>#{index}</div>
       {selected && <div className={styles.checkBadge}>✓</div>}
     </div>
   );
@@ -80,36 +53,68 @@ const AssetItem = memo(({ index, imgSrc, selected, isOverlay, isDirect, onPick }
 AssetItem.displayName = "AssetItem";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// SUB — AssetGrid
+// SUB — TextureThumb
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-interface AssetGridProps {
-  cat: AssetCategory;
-  selectedIndex: number | undefined;
-  getImgSrc: (cat: AssetCategory, index: number) => string;
-  onPick: (catId: string, index: number) => void;
+interface TextureThumbProps {
+  catId: string;
+  drawable: number;
+  texIdx: number;
+  imgSrc: string;
+  selected: boolean;
+  onPick: (catId: string, tex: number) => void;
 }
 
-const AssetGrid = memo(({ cat, selectedIndex, getImgSrc, onPick }: AssetGridProps) => {
-  const isOverlay = cat.overlayId != null;
-  const isDirect  = cat.direct === true;
+const TextureThumb = memo(({ catId, drawable: _drawable, texIdx, imgSrc, selected, onPick }: TextureThumbProps) => {
+  const [failed, setFailed] = useState(false);
 
   return (
-    <div className={styles.assetGrid}>
-      {Array.from({ length: cat.count }, (_, i) => (
-        <AssetItem
+    <button
+      className={`${styles.texThumb} ${selected ? styles.texSelected : ""}`}
+      onClick={() => onPick(catId, texIdx)}
+      title={`Texture #${texIdx}`}
+    >
+      {failed ? (
+        <div className={styles.texFallback}>#{texIdx}</div>
+      ) : (
+        <img src={imgSrc} alt={`Texture ${texIdx}`} loading="lazy" onError={() => setFailed(true)} />
+      )}
+      <span className={styles.texBadge}>{texIdx}</span>
+    </button>
+  );
+});
+TextureThumb.displayName = "TextureThumb";
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SUB — ColorGrid
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+interface ColorGridProps {
+  palette: string[];
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}
+
+const ColorGrid = memo(({ palette, label, value, onChange }: ColorGridProps) => (
+  <div className={styles.colorSection}>
+    <div className={styles.colorLabel}>
+      <div className={styles.colorPreviewDot} style={{ backgroundColor: palette[value] ?? "#000" }} />
+      {label}
+      <span className={styles.colorSubLabel}>#{value}</span>
+    </div>
+    <div className={styles.colorGrid}>
+      {palette.map((color, i) => (
+        <button
           key={i}
-          index={i}
-          imgSrc={getImgSrc(cat, i)}
-          selected={selectedIndex === i}
-          isOverlay={isOverlay}
-          isDirect={isDirect}
-          onPick={(idx) => onPick(cat.id, idx)}
+          className={`${styles.colorSwatch} ${value === i ? styles.swatchSelected : ""}`}
+          style={{ backgroundColor: color }}
+          title={`${label} ${i}`}
+          onClick={() => onChange(i)}
         />
       ))}
     </div>
-  );
-});
-AssetGrid.displayName = "AssetGrid";
+  </div>
+));
+ColorGrid.displayName = "ColorGrid";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MAIN — AssetPicker
@@ -121,31 +126,36 @@ export default function AssetPicker({
   onValidate,
   assetBasePath = "./assets",
 }: AssetPickerProps) {
+  const [detailTab, setDetailTab] = useState<"texture" | "color">("texture");
 
   const {
-    gender,
-    activeCatId,
-    activeCat,
-    catFilter,
-    categories,
-    currentSel,
-    selectionCount,
-    setGender,
-    openCategory,
-    pickItem,
-    removeSelection,
-    clearAll,
-    setCatFilter,
-    getPayload,
-    getImgSrc,
+    gender, activeCatId, activeCat, catFilter, categories,
+    currentSel, selectionCount,
+    setGender, openCategory, pickItem, pickTexture, pickColor, pickHighlight,
+    removeSelection, clearAll, setCatFilter, getPayload, getImgSrc, getItemSel,
   } = useAssetPicker({ defaultGender, initialSelections, assetBasePath, onChange });
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  // ── Sélection active dans la cat courante ─────────────────────────────
+  const activeSel: ItemSelection | undefined = activeCat ? getItemSel(activeCat.id) : undefined;
+
+  // ── Nombre de textures de la catégorie active ─────────────────────────
+  const texCount = activeCat
+    ? (activeCat.propAnchor != null
+        ? (activeCat.propTextureCount ?? 8)
+        : (activeCat.textureCount ?? 16))
+    : 0;
+
+  // ── Palette couleur ───────────────────────────────────────────────────
+  const palette = activeCat?.colorType === "makeup" ? MAKEUP_COLORS
+    : activeCat?.colorType === "hair" ? HAIR_COLORS
+    : null;
+
+  // ── Validation ────────────────────────────────────────────────────────
   const handleValidate = useCallback(() => {
     onValidate?.(getPayload());
   }, [onValidate, getPayload]);
 
-  // ── Sidebar groupée ───────────────────────────────────────────────────────
+  // ── Sidebar groupée ───────────────────────────────────────────────────
   const renderSidebar = () => {
     const allCats = CATEGORIES[gender];
     const filteredIds = new Set(categories.map((c) => c.id));
@@ -161,8 +171,8 @@ export default function AssetPicker({
         <div key={group.label}>
           <div className={styles.groupLabel}>{group.label}</div>
           {groupCats.map((cat) => {
-            const selVal = currentSel[cat.id];
-            const hasSel = selVal !== undefined;
+            const sel = currentSel[cat.id];
+            const hasSel = sel !== undefined;
             return (
               <button
                 key={cat.id}
@@ -175,7 +185,7 @@ export default function AssetPicker({
                   <span className={styles.catLabel}>{cat.label}</span>
                 </span>
                 <span className={`${styles.catTag} ${hasSel ? styles.selected : ""}`}>
-                  {hasSel ? `#${selVal}` : cat.count}
+                  {hasSel ? `#${sel.drawable}` : cat.count}
                 </span>
               </button>
             );
@@ -185,7 +195,81 @@ export default function AssetPicker({
     });
   };
 
-  // ── Barre de sélections ───────────────────────────────────────────────────
+  // ── Detail panel (texture + color) ────────────────────────────────────
+  const renderDetailPanel = () => {
+    if (!activeCat || !activeSel) return null;
+
+    const hasTextures = texCount > 1;
+    const hasColor = !!palette;
+    if (!hasTextures && !hasColor) return null;
+
+    const tabs = [
+      hasTextures && { id: "texture" as const, label: "Textures" },
+      hasColor    && { id: "color"   as const, label: "Couleurs" },
+    ].filter(Boolean) as { id: "texture" | "color"; label: string }[];
+
+    // Auto-switch si tab courant n'est plus disponible
+    const currentTab = tabs.find((t) => t.id === detailTab) ? detailTab
+      : tabs[0]?.id ?? "texture";
+
+    return (
+      <div className={styles.detailPanel}>
+        {/* Tabs */}
+        <div className={styles.detailHeader}>
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              className={`${styles.detailTab} ${currentTab === t.id ? styles.activeTab : ""}`}
+              onClick={() => setDetailTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className={styles.detailBody}>
+          {/* TEXTURES */}
+          {currentTab === "texture" && hasTextures && (
+            <div className={styles.texStrip}>
+              {Array.from({ length: texCount }, (_, i) => (
+                <TextureThumb
+                  key={i}
+                  catId={activeCat.id}
+                  drawable={activeSel.drawable}
+                  texIdx={i}
+                  imgSrc={getImgSrc(activeCat, activeSel.drawable, i)}
+                  selected={activeSel.texture === i}
+                  onPick={pickTexture}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* COULEURS */}
+          {currentTab === "color" && hasColor && palette && (
+            <div className={styles.colorSection} style={{ gap: 12 }}>
+              <ColorGrid
+                palette={palette}
+                label={activeCat.colorType === "hair" ? "Couleur" : "Teinte"}
+                value={activeSel.color ?? 0}
+                onChange={(v) => pickColor(activeCat.id, v)}
+              />
+              {activeCat.colorType === "hair" && (
+                <ColorGrid
+                  palette={palette}
+                  label="Reflet"
+                  value={activeSel.highlight ?? 0}
+                  onChange={(v) => pickHighlight(activeCat.id, v)}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Barre de sélections ───────────────────────────────────────────────
   const renderSelBar = () => {
     const entries = Object.entries(currentSel);
     const allCats = CATEGORIES[gender];
@@ -198,8 +282,8 @@ export default function AssetPicker({
             Cliquez sur une miniature pour la sélectionner
           </div>
           <div className={styles.actionsRow}>
-            <button className={styles.validateBtn} disabled onClick={handleValidate}>
-              ✓ Valider la tenue
+            <button className={styles.validateBtn} disabled>
+              ✓ Valider la sélection
             </button>
           </div>
         </div>
@@ -213,14 +297,16 @@ export default function AssetPicker({
             <span className={styles.selBarDot} />
             {entries.length} sélectionné{entries.length > 1 ? "s" : ""}
           </span>
-          <button className={styles.clearAllBtn} onClick={clearAll}>
-            🗑️ Tout effacer
-          </button>
+          <button className={styles.clearAllBtn} onClick={clearAll}>🗑️ Tout effacer</button>
         </div>
 
         <div className={styles.selRows}>
-          {entries.map(([catId, val]) => {
+          {entries.map(([catId, item]) => {
             const cat = allCats.find((c) => c.id === catId);
+            const colorDot = (item.color !== undefined && cat?.colorType && cat.colorType !== "none")
+              ? (cat.colorType === "hair" ? HAIR_COLORS[item.color] : MAKEUP_COLORS[item.color])
+              : null;
+
             return (
               <div key={catId} className={styles.selRow}>
                 <span className={styles.selRowLeft}>
@@ -228,7 +314,13 @@ export default function AssetPicker({
                   <span className={styles.selRowLabel}>{cat?.label ?? catId}</span>
                 </span>
                 <span className={styles.selRowRight}>
-                  <span className={styles.selRowCode}>#{val}</span>
+                  {colorDot && (
+                    <span className={styles.selRowColor} style={{ backgroundColor: colorDot }} />
+                  )}
+                  <span className={styles.selRowCode}>#{item.drawable}</span>
+                  {item.texture > 0 && (
+                    <span className={styles.selRowCode} style={{ opacity: 0.6 }}>t{item.texture}</span>
+                  )}
                   <button
                     className={styles.selRowDel}
                     onClick={() => removeSelection(catId)}
@@ -248,7 +340,7 @@ export default function AssetPicker({
             onClick={handleValidate}
             disabled={entries.length === 0}
           >
-            ✓ Valider la tenue ({entries.length})
+            ✓ Valider la sélection ({entries.length})
           </button>
         </div>
       </div>
@@ -272,15 +364,13 @@ export default function AssetPicker({
         >
           <span className={styles.genderIcon}>♂</span> Homme
         </button>
-
         <input
-          className={`${styles.searchInput}`}
+          className={styles.searchInput}
           type="text"
           placeholder="Filtrer catégories…"
           value={catFilter}
           onChange={(e) => setCatFilter(e.target.value)}
         />
-
         <span className={`${styles.totalBadge} ${selectionCount > 0 ? styles.hasItems : ""}`}>
           {selectionCount} sélectionné{selectionCount > 1 ? "s" : ""}
         </span>
@@ -289,25 +379,21 @@ export default function AssetPicker({
       {/* ── Body ───────────────────────────────────────────────────────── */}
       <div className={styles.body}>
 
-        {/* Sidebar catégories */}
-        <div className={styles.sidebar}>
-          {renderSidebar()}
-        </div>
+        {/* Sidebar */}
+        <div className={styles.sidebar}>{renderSidebar()}</div>
 
         {/* Panneau droit */}
         <div className={styles.rightPanel}>
 
-          {/* Header du panneau */}
+          {/* Header */}
           <div className={styles.panelHeader}>
             <span className={styles.panelTitle}>
               {activeCat ? `${activeCat.icon} ${activeCat.label}` : "Choisir une catégorie"}
             </span>
-            {activeCat && (
-              <span className={styles.panelMeta}>
-                {activeCat.overlayId != null ? "overlay" :
-                 activeCat.propAnchor != null ? "prop" :
-                 activeCat.componentId != null ? `comp ${activeCat.componentId}` : "direct"}
-                {currentSel[activeCat.id] !== undefined && ` · #${currentSel[activeCat.id]}`}
+            {activeCat && activeSel && (
+              <span className={styles.panelInfo}>
+                #{activeSel.drawable}
+                {activeSel.texture > 0 && ` · t${activeSel.texture}`}
               </span>
             )}
           </div>
@@ -318,21 +404,27 @@ export default function AssetPicker({
               <div className={styles.emptyState}>
                 <span className={styles.emptyIcon}>🗂️</span>
                 <span className={styles.emptyTitle}>Aucune catégorie sélectionnée</span>
-                <span className={styles.emptyHint}>
-                  Choisissez une catégorie dans le menu de gauche
-                </span>
+                <span className={styles.emptyHint}>Choisissez une catégorie dans le menu de gauche</span>
               </div>
             ) : (
-              <AssetGrid
-                cat={activeCat}
-                selectedIndex={currentSel[activeCat.id]}
-                getImgSrc={getImgSrc}
-                onPick={pickItem}
-              />
+              <div className={styles.assetGrid}>
+                {Array.from({ length: activeCat.count }, (_, i) => (
+                  <AssetItem
+                    key={i}
+                    index={i}
+                    imgSrc={getImgSrc(activeCat, i, activeSel?.texture ?? 0)}
+                    selected={activeSel?.drawable === i}
+                    onPick={(idx) => pickItem(activeCat.id, idx)}
+                  />
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Barre de sélection + bouton valider */}
+          {/* ── Detail panel : textures + couleurs ── */}
+          {renderDetailPanel()}
+
+          {/* Barre de sélection */}
           {renderSelBar()}
         </div>
       </div>

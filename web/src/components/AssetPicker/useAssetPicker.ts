@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ASSET PICKER — HOOK LOGIQUE
+// ASSET PICKER — HOOK v2 (texture + color)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { useState, useCallback, useMemo } from "react";
@@ -8,6 +8,7 @@ import type {
   GenderModel,
   GenderSelections,
   PickerSelection,
+  ItemSelection,
   AssetPayload,
   AssetCategory,
 } from "./assetPicker.types";
@@ -33,7 +34,7 @@ export function useAssetPicker({
     mp_m_freemode_01: initialSelections?.mp_m_freemode_01 ?? {},
   });
 
-  // ── Catégories filtrées pour le genre actif ─────────────────────────────
+  // ── Catégories filtrées ─────────────────────────────────────────────────
   const categories = useMemo<AssetCategory[]>(() => {
     const cats = CATEGORIES[gender];
     if (!catFilter.trim()) return cats;
@@ -41,7 +42,7 @@ export function useAssetPicker({
     return cats.filter((c) => c.label.toLowerCase().includes(f) || c.id.includes(f));
   }, [gender, catFilter]);
 
-  // ── Sélections pour le genre actif ─────────────────────────────────────
+  // ── Sélections actives ──────────────────────────────────────────────────
   const currentSel = useMemo<PickerSelection>(
     () => selections[gender],
     [selections, gender]
@@ -53,10 +54,9 @@ export function useAssetPicker({
     [gender, activeCatId]
   );
 
-  // ── Nombre de sélections pour le genre actif ────────────────────────────
   const selectionCount = Object.keys(currentSel).length;
 
-  // ── Construction du payload kt_character ────────────────────────────────
+  // ── Construction payload ────────────────────────────────────────────────
   const buildPayload = useCallback(
     (sel: PickerSelection, g: GenderModel): AssetPayload => {
       const cats = CATEGORIES[g];
@@ -64,20 +64,27 @@ export function useAssetPicker({
       const props: AssetPayload["props"] = {};
       const overlays: AssetPayload["overlays"] = {};
 
-      for (const [catId, val] of Object.entries(sel)) {
+      for (const [catId, item] of Object.entries(sel)) {
         const cat = cats.find((c) => c.id === catId);
         if (!cat) continue;
 
         if (cat.componentId != null) {
-          components[cat.componentId] = { drawable: val, texture: 0, palette: 0 };
+          components[cat.componentId] = {
+            drawable: item.drawable,
+            texture: item.texture,
+            palette: 0,
+          };
         } else if (cat.propAnchor != null) {
-          props[cat.propAnchor] = { propIndex: val, propTextureIndex: 0 };
+          props[cat.propAnchor] = {
+            propIndex: item.drawable,
+            propTextureIndex: item.texture,
+          };
         } else if (cat.overlayId != null) {
           overlays[cat.overlayId] = {
-            index: val,
+            index: item.drawable,
             opacity: 1.0,
-            firstColor: 0,
-            secondColor: 0,
+            firstColor: item.color ?? 0,
+            secondColor: item.highlight ?? 0,
           };
         }
       }
@@ -89,11 +96,11 @@ export function useAssetPicker({
 
   // ── URL image ────────────────────────────────────────────────────────────
   const getImgSrc = useCallback(
-    (cat: AssetCategory, index: number): string => {
+    (cat: AssetCategory, drawable: number, texture = 0): string => {
       if (cat.direct) {
-        return `${assetBasePath}/${gender}/${cat.id}/${index}.png`;
+        return `${assetBasePath}/${gender}/${cat.id}/${drawable}.png`;
       }
-      return `${assetBasePath}/${gender}/${cat.id}/${index}/0.png`;
+      return `${assetBasePath}/${gender}/${cat.id}/${drawable}/${texture}.png`;
     },
     [gender, assetBasePath]
   );
@@ -104,20 +111,86 @@ export function useAssetPicker({
     setActiveCatId(null);
   }, []);
 
-  const openCategory = useCallback((catId: string) => {
-    setActiveCatId(catId);
-  }, []);
+  const openCategory = useCallback((catId: string) => setActiveCatId(catId), []);
 
+  /** Sélectionne / désélectionne un drawable */
   const pickItem = useCallback(
-    (catId: string, index: number) => {
+    (catId: string, drawable: number) => {
       setSelections((prev) => {
         const prevSel = prev[gender];
-        const newSel =
-          prevSel[catId] === index
-            ? // Désélection si on reclique
-              Object.fromEntries(Object.entries(prevSel).filter(([k]) => k !== catId))
-            : { ...prevSel, [catId]: index };
+        const existing = prevSel[catId];
+        let newSel: PickerSelection;
 
+        if (existing?.drawable === drawable) {
+          // désélection
+          newSel = Object.fromEntries(Object.entries(prevSel).filter(([k]) => k !== catId));
+        } else {
+          newSel = {
+            ...prevSel,
+            [catId]: { drawable, texture: 0, color: existing?.color ?? 0, highlight: existing?.highlight ?? 0 },
+          };
+        }
+
+        const next = { ...prev, [gender]: newSel };
+        onChange?.(buildPayload(newSel, gender), newSel);
+        return next;
+      });
+    },
+    [gender, onChange, buildPayload]
+  );
+
+  /** Met à jour uniquement la texture du drawable actif */
+  const pickTexture = useCallback(
+    (catId: string, texture: number) => {
+      setSelections((prev) => {
+        const prevSel = prev[gender];
+        const existing = prevSel[catId];
+        if (!existing) return prev;
+
+        const newSel: PickerSelection = {
+          ...prevSel,
+          [catId]: { ...existing, texture },
+        };
+        const next = { ...prev, [gender]: newSel };
+        onChange?.(buildPayload(newSel, gender), newSel);
+        return next;
+      });
+    },
+    [gender, onChange, buildPayload]
+  );
+
+  /** Met à jour la couleur (firstColor) */
+  const pickColor = useCallback(
+    (catId: string, color: number) => {
+      setSelections((prev) => {
+        const prevSel = prev[gender];
+        const existing = prevSel[catId];
+        if (!existing) return prev;
+
+        const newSel: PickerSelection = {
+          ...prevSel,
+          [catId]: { ...existing, color },
+        };
+        const next = { ...prev, [gender]: newSel };
+        onChange?.(buildPayload(newSel, gender), newSel);
+        return next;
+      });
+    },
+    [gender, onChange, buildPayload]
+  );
+
+  /** Met à jour le highlight (secondColor) */
+  const pickHighlight = useCallback(
+    (catId: string, highlight: number) => {
+      setSelections((prev) => {
+        const prevSel = prev[gender];
+        const existing = prevSel[catId];
+        if (!existing) return prev;
+
+        const newSel: PickerSelection = {
+          ...prevSel,
+          [catId]: { ...existing, highlight },
+        };
         const next = { ...prev, [gender]: newSel };
         onChange?.(buildPayload(newSel, gender), newSel);
         return next;
@@ -153,24 +226,16 @@ export function useAssetPicker({
     [buildPayload, currentSel, gender]
   );
 
-  return {
-    // État
-    gender,
-    activeCatId,
-    activeCat,
-    catFilter,
-    categories,
-    currentSel,
-    selectionCount,
+  /** Retourne l'ItemSelection actuel pour une catégorie */
+  const getItemSel = useCallback(
+    (catId: string): ItemSelection | undefined => currentSel[catId],
+    [currentSel]
+  );
 
-    // Actions
-    setGender,
-    openCategory,
-    pickItem,
-    removeSelection,
-    clearAll,
-    setCatFilter,
-    getPayload,
-    getImgSrc,
+  return {
+    gender, activeCatId, activeCat, catFilter, categories,
+    currentSel, selectionCount,
+    setGender, openCategory, pickItem, pickTexture, pickColor, pickHighlight,
+    removeSelection, clearAll, setCatFilter, getPayload, getImgSrc, getItemSel,
   };
 }

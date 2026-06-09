@@ -1,26 +1,20 @@
-@use "../../style/variables.scss" as *;
-@use "../../style/mixins.scss" as *;
+@use "../../style/variables" as *;
+@use "../../style/mixins" as *;
 
-.wrapper {
-  @include flex-col(8px);
-  width: 100%;
-}
+.wrapper { @include flex-col(8px); width: 100%; }
 
-.header {
-  @include flex-between;
-  align-items: center;
-}
+.header { @include flex-between; align-items: center; }
 
 .label {
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
   font-weight: $font-weight-semibold;
   color: $text-secondary;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .value {
-  font-size: $font-size-md;
+  font-size: $font-size-sm;
   font-weight: $font-weight-bold;
   color: $accent;
   background: rgba(0, 217, 255, 0.12);
@@ -29,44 +23,38 @@
   min-width: 36px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  font-family: $font-family-mono;
 }
 
-.sliderRow {
-  @include flex-row($spacing-sm);
-  align-items: center;
-}
+.sliderRow { @include flex-row($spacing-sm); align-items: center; }
 
 .btn {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(0, 217, 255, 0.15) !important;
   color: $text !important;
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
   padding: 0 !important;
   border-radius: $radius-xs !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
   line-height: 1 !important;
   transform: none !important;
   box-shadow: none !important;
   transition: $transition !important;
   cursor: pointer;
+  flex-shrink: 0;
 
   &:hover {
     background: rgba(0, 217, 255, 0.15) !important;
     border-color: $accent !important;
     color: $accent !important;
     transform: scale(1.05) !important;
-    box-shadow: none !important;
   }
-
-  &:active {
-    background: rgba(0, 217, 255, 0.25) !important;
-    transform: scale(0.95) !important;
-  }
+  &:active { transform: scale(0.95) !important; }
 }
 
 .slider {
@@ -79,7 +67,6 @@
   border: none !important;
   padding: 0 !important;
   cursor: pointer;
-  position: relative;
 
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -90,11 +77,7 @@
     cursor: pointer;
     box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.25);
     transition: $transition;
-
-    &:hover {
-      transform: scale(1.25);
-      box-shadow: 0 0 0 4px rgba(0, 217, 255, 0.4), $shadow-glow;
-    }
+    &:hover { transform: scale(1.25); box-shadow: 0 0 0 4px rgba(0, 217, 255, 0.4), $shadow-glow; }
   }
 
   &::-moz-range-thumb {
@@ -106,19 +89,8 @@
     border: none;
     box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.25);
     transition: $transition;
-
-    &:hover {
-      transform: scale(1.25);
-      box-shadow: 0 0 0 4px rgba(0, 217, 255, 0.4), $shadow-glow;
-    }
+    &:hover { transform: scale(1.25); }
   }
 
-  &::-webkit-slider-runnable-track {
-    height: 4px;
-    border-radius: 2px;
-  }
-
-  &:focus {
-    outline: none;
-  }
+  &:focus { outline: none; }
 }

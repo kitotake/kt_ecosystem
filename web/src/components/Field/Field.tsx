@@ -2,10 +2,7 @@ import styles from "./Field.module.scss";
 
 type FieldType = "text" | "date" | "select" | "readonly";
 
-interface SelectOption {
-  value: string;
-  label: string;
-}
+interface SelectOption { value: string; label: string; }
 
 interface FieldProps {
   label: string;
@@ -16,21 +13,13 @@ interface FieldProps {
   hint?: string;
   error?: string;
   required?: boolean;
-  options?: SelectOption[]; // for type="select"
+  options?: SelectOption[];
   disabled?: boolean;
 }
 
 export default function Field({
-  label,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  hint,
-  error,
-  required,
-  options = [],
-  disabled,
+  label, type = "text", value, onChange,
+  placeholder, hint, error, required, options = [], disabled,
 }: FieldProps) {
   return (
     <div className={styles.wrapper}>
@@ -49,9 +38,7 @@ export default function Field({
           disabled={disabled}
         >
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
       ) : (

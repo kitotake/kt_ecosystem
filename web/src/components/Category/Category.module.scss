@@ -1,36 +1,25 @@
-////@use "../style/variables.scss" as *;
-//@use "../style/mixins.scss" as *;
-
 @use "../../style/variables" as *;
 @use "../../style/mixins" as *;
 
 .section {
   @include flex-col($spacing-md);
   margin-bottom: $spacing-md;
-//  padding: $spacing-lg;
-  background: rgba(0, 217, 255, 0.04);
-  border: 1px solid rgba(0, 217, 255, 0.08);
+  background: rgba(0, 217, 255, 0.03);
+  border: 1px solid rgba(0, 217, 255, 0.07);
   border-radius: $radius-sm;
+  padding: $spacing-md;
   transition: $transition;
-  
-  &:hover {
-    background: rgba(0, 217, 255, 0.06);
-    border-color: rgba(0, 217, 255, 0.15);
-  }
+  &:hover { background: rgba(0, 217, 255, 0.05); border-color: rgba(0, 217, 255, 0.12); }
 }
 
 .header {
   @include flex-row($spacing-sm);
   align-items: center;
   padding-bottom: $spacing-sm;
-  border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+  border-bottom: 1px solid rgba(0, 217, 255, 0.08);
 }
 
-.icon {
-  font-size: 16px;
-  opacity: 0.8;
-  color: $accent;
-}
+.icon { font-size: 15px; opacity: 0.8; color: $accent; }
 
 .title {
   font-size: $font-size-sm;
@@ -40,6 +29,4 @@
   color: $muted;
 }
 
-.content {
-  @include flex-col($spacing-md);
-}
+.content { @include flex-col($spacing-md); }

@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// useCreator.ts — Identité + Tenue uniquement
+// useCreator.ts — v2 (updateHeadOverlays exposé)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 import { useState, useCallback, useEffect } from "react";
@@ -29,7 +29,6 @@ export interface IdentityData {
   gender: "mp_m_freemode_01" | "mp_f_freemode_01";
 }
 
-// Seulement 2 étapes
 export const STEPS = [
   { id: "identity", label: "Identité", icon: "👤", tab: "identity" },
   { id: "clothing", label: "Tenue",    icon: "👔", tab: "clothing" },
@@ -37,7 +36,7 @@ export const STEPS = [
 
 export type StepId = typeof STEPS[number]["id"];
 
-// ─── Validation identité ──────────────────────────────────────────────────
+// ─── Validation ───────────────────────────────────────────────────────────
 function validateIdentity(identity: IdentityData): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -63,23 +62,18 @@ function validateIdentity(identity: IdentityData): Record<string, string> {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// HOOK PRINCIPAL
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export function useCreator() {
-  // ── Visibilité / étapes ────────────────────────────────────────────────
   const [visible,     setVisible]     = useState(false);
   const [stepIndex,   setStepIndex]   = useState(0);
   const [errors,      setErrors]      = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [submitting,  setSubmitting]  = useState(false);
 
-  // ── Données identité ───────────────────────────────────────────────────
   const [identity, setIdentity] = useState<IdentityData>({
     identifier: "", unique_id: "", firstname: "", lastname: "",
     dateofbirth: "", gender: "mp_m_freemode_01",
   });
 
-  // ── Données apparence (gardées pour le payload final) ──────────────────
   const [headBlend,    setHeadBlend]    = useState<HeadBlend>(DEFAULT_HEAD_BLEND);
   const [faceFeatures, setFaceFeatures] = useState<FaceFeatures>(DEFAULT_FACE_FEATURES);
   const [headOverlays, setHeadOverlays] = useState<HeadOverlays>(DEFAULT_HEAD_OVERLAYS);
@@ -107,19 +101,10 @@ export function useCreator() {
     }
   }, [getResourceName]);
 
-  // ── Payload complet ────────────────────────────────────────────────────
   const buildPayload = useCallback(() => ({
-    ...identity,
-    headBlend,
-    faceFeatures,
-    headOverlays,
-    hair,
-    components,
-    props,
-    tattoos,
+    ...identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos,
   }), [identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos]);
 
-  // ── Fermeture UI ───────────────────────────────────────────────────────
   const closeUI = useCallback(async () => {
     setSubmitting(false);
     setServerError("");
@@ -127,7 +112,6 @@ export function useCreator() {
     setVisible(false);
   }, [nuiFetch]);
 
-  // ── Navigation étapes ──────────────────────────────────────────────────
   const goToStep = useCallback((index: number) => {
     const step = STEPS[index];
     if (!step) return;
@@ -136,13 +120,9 @@ export function useCreator() {
   }, [nuiFetch]);
 
   const nextStep = useCallback(() => {
-    // Validation identité avant de passer à la tenue
     if (stepIndex === 0) {
       const fieldErrors = validateIdentity(identity);
-      if (Object.keys(fieldErrors).length > 0) {
-        setErrors(fieldErrors);
-        return;
-      }
+      if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return; }
       setErrors({});
     }
     if (stepIndex < STEPS.length - 1) goToStep(stepIndex + 1);
@@ -152,39 +132,25 @@ export function useCreator() {
     if (stepIndex > 0) goToStep(stepIndex - 1);
   }, [stepIndex, goToStep]);
 
-  // ── Soumission personnage ──────────────────────────────────────────────
   const handleSubmit = useCallback(async () => {
     const fieldErrors = validateIdentity(identity);
-    if (Object.keys(fieldErrors).length > 0) {
-      setErrors(fieldErrors);
-      goToStep(0);
-      return;
-    }
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); goToStep(0); return; }
     setErrors({});
     setSubmitting(true);
-
     const created = await nuiFetch("createCharacter", buildPayload());
-    if (!created) {
-      setServerError("La création du personnage a échoué.");
-      setSubmitting(false);
-      return;
-    }
-
+    if (!created) { setServerError("La création du personnage a échoué."); setSubmitting(false); return; }
     setSubmitting(false);
     await closeUI();
   }, [identity, buildPayload, nuiFetch, goToStep, closeUI]);
 
-  // ── Aperçu temps réel ──────────────────────────────────────────────────
   const sendPreview = useCallback((patch: object) => {
     nuiFetch("update", patch);
   }, [nuiFetch]);
 
-  // ── Contrôle caméra ────────────────────────────────────────────────────
   const camControl = useCallback((action: string) => {
     nuiFetch("cameraControl", { action });
   }, [nuiFetch]);
 
-  // ── Mise à jour identité ───────────────────────────────────────────────
   const updateIdentity = useCallback((key: keyof IdentityData, value: string) => {
     setIdentity((prev) => {
       const updated = { ...prev, [key]: value };
@@ -194,29 +160,36 @@ export function useCreator() {
     setErrors((e) => { const n = { ...e }; delete n[key]; return n; });
   }, [sendPreview]);
 
-  // ── Mise à jour tenue (depuis AssetPicker) ─────────────────────────────
   const updateComponents = useCallback((d: ClothingComponents) => {
-    setComponents(d);
-    sendPreview({ components: d });
+    setComponents(d); sendPreview({ components: d });
   }, [sendPreview]);
 
   const updateProps = useCallback((d: Props) => {
-    setProps(d);
-    sendPreview({ props: d });
+    setProps(d); sendPreview({ props: d });
   }, [sendPreview]);
 
-  // Ces setters sont conservés pour le payload final même sans UI dédiée
-  const updateHeadBlend    = useCallback((d: HeadBlend)    => { setHeadBlend(d);    sendPreview({ headBlend: d });    }, [sendPreview]);
-  const updateFaceFeatures = useCallback((d: FaceFeatures) => { setFaceFeatures(d); sendPreview({ faceFeatures: d }); }, [sendPreview]);
-  const updateHeadOverlays = useCallback((d: HeadOverlays) => { setHeadOverlays(d); sendPreview({ headOverlays: d }); }, [sendPreview]);
-  const updateHair         = useCallback((patch: Partial<typeof hair>) => {
+  const updateHeadBlend = useCallback((d: HeadBlend) => {
+    setHeadBlend(d); sendPreview({ headBlend: d });
+  }, [sendPreview]);
+
+  const updateFaceFeatures = useCallback((d: FaceFeatures) => {
+    setFaceFeatures(d); sendPreview({ faceFeatures: d });
+  }, [sendPreview]);
+
+  // ── NOUVEAU : exposé pour AssetPickerPage overlays ─────────────────────
+  const updateHeadOverlays = useCallback((d: HeadOverlays) => {
+    setHeadOverlays(d); sendPreview({ headOverlays: d });
+  }, [sendPreview]);
+
+  const updateHair = useCallback((patch: Partial<typeof hair>) => {
     setHair((prev) => { const u = { ...prev, ...patch }; sendPreview({ hair: u }); return u; });
   }, [sendPreview]);
+
   const updateTattoos = useCallback((d: Tattoo[]) => {
     setTattoos(d); sendPreview({ tattoos: d });
   }, [sendPreview]);
 
-  // ── Écoute messages NUI ────────────────────────────────────────────────
+  // ── NUI messages ──────────────────────────────────────────────────────
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const msg = event.data;
@@ -240,14 +213,12 @@ export function useCreator() {
             if (s.tattoos)      setTattoos(s.tattoos);
           }
           break;
-
         case "close":
           setVisible(false);
           setSubmitting(false);
           setServerError("");
           setErrors({});
           break;
-
         case "setIdentifier":
           setIdentity((p) => ({
             ...p,
@@ -255,7 +226,6 @@ export function useCreator() {
             unique_id:  msg.unique_id  ?? p.unique_id,
           }));
           break;
-
         case "error":
           setServerError(msg.message ?? "Erreur inconnue");
           setSubmitting(false);
@@ -267,7 +237,7 @@ export function useCreator() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  // ── Fermeture clavier (Échap) ─────────────────────────────────────────
+  // ── Échap ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!visible) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -279,7 +249,6 @@ export function useCreator() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [visible, closeUI]);
 
-  // ── Utilitaires ────────────────────────────────────────────────────────
   const getAge = useCallback((): number | null => {
     if (!identity.dateofbirth) return null;
     const age = new Date().getFullYear() - new Date(identity.dateofbirth).getFullYear();
@@ -287,42 +256,12 @@ export function useCreator() {
   }, [identity.dateofbirth]);
 
   return {
-    // État UI
-    visible,
-    stepIndex,
-    errors,
-    serverError,
-    submitting,
+    visible, stepIndex, errors, serverError, submitting,
     isLastStep: stepIndex === STEPS.length - 1,
     currentStep: STEPS[stepIndex],
-
-    // Données
-    identity,
-    headBlend,
-    faceFeatures,
-    headOverlays,
-    hair,
-    components,
-    props,
-    tattoos,
-
-    // Actions
-    closeUI,
-    goToStep,
-    nextStep,
-    prevStep,
-    handleSubmit,
-    camControl,
-    getAge,
-
-    // Updaters
-    updateIdentity,
-    updateHeadBlend,
-    updateFaceFeatures,
-    updateHeadOverlays,
-    updateHair,
-    updateComponents,
-    updateProps,
-    updateTattoos,
+    identity, headBlend, faceFeatures, headOverlays, hair, components, props, tattoos,
+    closeUI, goToStep, nextStep, prevStep, handleSubmit, camControl, getAge,
+    updateIdentity, updateHeadBlend, updateFaceFeatures, updateHeadOverlays,
+    updateHair, updateComponents, updateProps, updateTattoos,
   };
 }

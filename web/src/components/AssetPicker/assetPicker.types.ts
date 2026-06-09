@@ -1,5 +1,5 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ASSET PICKER — TYPES
+// ASSET PICKER — TYPES (v2 — texture + color support)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export type GenderModel = "mp_f_freemode_01" | "mp_m_freemode_01";
@@ -15,10 +15,28 @@ export interface AssetCategory {
   propAnchor?: number | null;  // SetPedPropIndex
   overlayId?: number | null;   // SetPedHeadOverlay
   direct?: boolean;            // images à plat (ex: faces/0.png vs hair/0/0.png)
+
+  // ── NOUVEAU ──────────────────────────────────────────────────────────
+  /** Nombre de textures disponibles par drawable (défaut : 16) */
+  textureCount?: number;
+  /** Cet asset supporte-t-il une couleur GTA (cheveux, barbe, overlay) ? */
+  hasColor?: boolean;
+  /** Type de palette couleur : "hair" | "makeup" | "none" */
+  colorType?: "hair" | "makeup" | "none";
+  /** Nombre de textures max pour les props */
+  propTextureCount?: number;
+}
+
+// ── Sélection enrichie ────────────────────────────────────────────────────
+export interface ItemSelection {
+  drawable: number;      // index du drawable / prop / overlay
+  texture: number;       // texture index (0 par défaut)
+  color?: number;        // firstColor (palette hair/makeup)
+  highlight?: number;    // secondColor (reflet — cheveux surtout)
 }
 
 export interface PickerSelection {
-  [catId: string]: number; // catId → index sélectionné
+  [catId: string]: ItemSelection;
 }
 
 export interface GenderSelections {
@@ -26,6 +44,7 @@ export interface GenderSelections {
   mp_m_freemode_01: PickerSelection;
 }
 
+// ── Payload final ─────────────────────────────────────────────────────────
 export interface AssetPayload {
   model: GenderModel;
   components: Record<number, { drawable: number; texture: number; palette: number }>;
@@ -34,14 +53,9 @@ export interface AssetPayload {
 }
 
 export interface AssetPickerProps {
-  /** Modèle de départ */
   defaultGender?: GenderModel;
-  /** Sélections initiales (pour pré-remplir depuis les données existantes du perso) */
   initialSelections?: Partial<GenderSelections>;
-  /** Appelé à chaque changement de sélection */
   onChange?: (payload: AssetPayload, selections: PickerSelection) => void;
-  /** Appelé quand l'utilisateur valide */
   onValidate?: (payload: AssetPayload) => void;
-  /** Chemin de base pour les images (ex: "/assets" ou "./assets") */
   assetBasePath?: string;
 }
