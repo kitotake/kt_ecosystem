@@ -332,3 +332,9 @@ function ApplyPreview(data)
 end
 
 exports("ApplyPreview", ApplyPreview)
+
+
+CreateThread(function()
+    Wait(5000)
+    print("^2KT_CHARACTER EXPORTS LOADED^7")
+end)

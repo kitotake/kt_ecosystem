@@ -1,58 +1,88 @@
 fx_version 'cerulean'
 game 'gta5'
 
-name 'kt_character'
-author 'kitotake'
-description 'Character Creator + Appearance (React TSX UI)'
-version '2.2.2'
+name        'kt_character'
+author      'kitotake'
+description 'KT Character — Core module (ped, preview, apparence, BDD)'
+version     '3.0.0'
 
--- FIX : déclarer les dépendances pour garantir l'ordre de démarrage.
--- oxmysql et union doivent être chargés AVANT kt_character.
 dependencies {
     'oxmysql',
     'union',
 }
 
-ui_page 'web/dist/index.html'
-
-files {
-    'web/dist/index.html',
-    'web/dist/assets/*.js',
-    'web/dist/assets/*.css',
-    'web/dist/assets/**/*',
+-- ── SHARED ────────────────────────────────────────────────────────────────
+shared_scripts {
+    'shared/config.lua',
+    'shared/events.lua',
 }
 
--- FIX : ordre explicite des scripts client — appearance et camera AVANT main
--- pour garantir que ApplyFullAppearance, ApplyOutfit, CreateCharacterCam, etc.
--- sont définis avant que main.lua ne les appelle.
+-- ── CLIENT ────────────────────────────────────────────────────────────────
+-- Ordre important : core avant api avant main
 client_scripts {
-    'client/utils.lua',
-    'client/appearance.lua',
-    'client/camera.lua',
+    'client/core/state.lua',
+    'client/core/ped.lua',
+    'client/core/camera.lua',
+    'client/core/preview.lua',
+    'client/core/events.lua',
+    'client/api/exports.lua',
     'client/main.lua',
 }
 
+-- ── SERVER ────────────────────────────────────────────────────────────────
+-- Ordre important : utils → core → api → main
 server_scripts {
-    -- Core (ordre important)
-    'server/config.lua',
-    'server/utils.lua',
-    'server/identifiers.lua',
-    'server/validator.lua',
-
-    -- Features
-    'server/character_create.lua',
-    'server/character_load.lua',
-    'server/character_skin.lua',
-    'server/character_update.lua',
-    'server/outfits.lua',
-    'server/events.lua',
-
-    -- Main (toujours en dernier)
-    'server/main.lua'
+    'server/utils/utils.lua',
+    'server/utils/identifiers.lua',
+    'server/utils/validator.lua',
+    'server/core/character.lua',
+    'server/core/appearance.lua',
+    'server/core/outfits.lua',
+    'server/api/exports.lua',
+    'server/main.lua',
 }
 
+-- ── EXPORTS CLIENT (déclarés pour les autres ressources) ──────────────────
 client_exports {
-    "ApplyFullAppearance",
-    "ApplyOutfit",
-    "ApplyPreview",
+    -- Preview
+    'Preview_Start',
+    'Preview_Stop',
+    'Preview_Refresh',
+    'Preview_SetCamera',
+    'Preview_CameraAction',
+    'Preview_Rotate',
+    'Preview_SetFaceZoom',
+    'Preview_IsActive',
+    'Preview_GetPed',
+    'Preview_PlayAnim',
+    'Preview_ResetAnim',
+    -- Preview → appliquer sur ped clone
+    'Preview_ApplyAppearance',
+    'Preview_ApplyClothing',
+    'Preview_ApplyHair',
+    'Preview_ApplyTattoos',
+    'Preview_ApplyPartial',
+    -- Apparence → appliquer sur joueur
+    'Appearance_Apply',
+    'Appearance_ApplyClothing',
+    'Appearance_ApplyHair',
+    'Appearance_ApplyTattoos',
+    'Appearance_ApplyOutfit',
+    -- Données
+    'Character_GetUniqueId',
+    'Character_GetCurrentAppearance',
+    'Character_GetIdentifier',
+}
+
+-- ── EXPORTS SERVER (déclarés pour les autres ressources) ──────────────────
+server_exports {
+    'Character_GetUniqueId',
+    'Character_GetData',
+    'Character_IsActive',
+    'Character_SaveAppearance',
+    'Character_SaveClothing',
+    'Character_SaveTattoos',
+    'Character_SaveHair',
+    'On',
+    'Emit',
 }
