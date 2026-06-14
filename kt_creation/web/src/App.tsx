@@ -14,7 +14,7 @@ import "./styles/global.scss"
 const S = {
   panel:     { position:"fixed" as const, left:24, top:24, width:380, maxHeight:"calc(100vh - 48px)", background:"#16161f", border:"1px solid rgba(0,217,255,0.12)", borderRadius:12, display:"flex", flexDirection:"column" as const, overflow:"hidden", boxShadow:"0 24px 64px rgba(0,0,0,0.7)" },
   stepBar:   { display:"flex", alignItems:"center", justifyContent:"center", gap:32, padding:"12px 16px 8px", borderBottom:"1px solid rgba(0,217,255,0.07)", flexShrink:0 },
-  stepDot:   (active: boolean, done: boolean): React.CSSProperties => ({ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor: done ? "pointer" : "default", background:"transparent", border:"none", padding:0 }),
+  stepDot:   (_active: boolean, done: boolean): React.CSSProperties => ({ display:"flex", flexDirection:"column", alignItems:"center", gap:4, cursor: done ? "pointer" : "default", background:"transparent", border:"none", padding:0 }),
   dotIcon:   (active: boolean, done: boolean): React.CSSProperties => ({ width:26, height:26, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, background: active ? "#00d9ff" : done ? "rgba(0,217,255,0.1)" : "rgba(255,255,255,0.04)", border: active ? "none" : done ? "1px solid rgba(0,217,255,0.25)" : "1px solid rgba(0,217,255,0.1)", color: active ? "#000" : done ? "#00d9ff" : "#707084", fontWeight: active ? 700 : 400 }),
   dotLabel:  (active: boolean): React.CSSProperties => ({ fontSize:8, letterSpacing:"0.08em", textTransform:"uppercase" as const, color: active ? "#00d9ff" : "#707084" }),
   stepHeader:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px 8px", flexShrink:0 },
@@ -136,9 +136,9 @@ function StepAppearance() {
         <div key={key} style={S.sliderRow}>
           <span style={S.sliderLabel}>{label}</span>
           <input style={S.slider} type="range" min={0} max={max}
-            value={(app.headBlend as Record<string, number>)[key] ?? 0}
+            value={(app.headBlend as unknown as Record<string, number>)[key] ?? 0}
             onChange={(e) => app.setHeadBlend({ ...app.headBlend, [key]: Number(e.target.value) })} />
-          <span style={S.sliderVal}>{(app.headBlend as Record<string, number>)[key] ?? 0}</span>
+          <span style={S.sliderVal}>{(app.headBlend as unknown as Record<string, number>)[key] ?? 0}</span>
         </div>
       ))}
       <div style={S.sliderRow}>
