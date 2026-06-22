@@ -1,30 +1,16 @@
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- KT_CREATION — SERVER MAIN
--- Reçoit les données de création et les transmet à kt_character.
+--
+-- FIX : ce fichier relayait "kt_creation:createCharacter" vers un event
+-- "kt_character:createCharacter_internal" qui n'a jamais existé (aucun
+-- AddEventHandler/RegisterNetEvent ne le gère où que ce soit) — le callback
+-- n'était donc jamais invoqué et le wizard restait bloqué indéfiniment.
+--
+-- Le client (kt_creation/client/main.lua) déclenche désormais directement
+-- l'event réseau réel "kt_character:characterCreated", géré par
+-- union/server/modules/character/manager/characterManager.lua, qui crée
+-- le personnage ET le sélectionne/spawn. Ce fichier n'a donc plus besoin
+-- de relayer quoi que ce soit pour la création.
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-RegisterNetEvent("kt_creation:createCharacter", function(data)
-    local src = source
-
-    -- On délègue entièrement à kt_character
-    TriggerEvent("kt_character:createCharacter_internal", src, data, function(character, err)
-        if err then
-            TriggerClientEvent("kt_creation:error", src, err)
-            return
-        end
-        TriggerClientEvent("kt_creation:created", src, character)
-    end)
-end)
-
--- Écouter les events internes kt_character via exports
-CreateThread(function()
-    Wait(500) -- attendre que kt_character soit chargé
-
-    -- S'abonner au succès de création pour notifier kt_creation
-    exports["kt_character"]:On("kt_character:internal:characterCreated", function(src, character)
-        -- kt_character gère déjà la notification, rien à faire ici
-        -- sauf si kt_creation veut faire des actions supplémentaires
-    end)
-end)
-
-print("[kt_creation] server chargé")
+print("[kt_creation] server chargé (délégation directe à kt_character:characterCreated)")

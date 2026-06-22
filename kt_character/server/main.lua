@@ -7,12 +7,21 @@ CreateThread(function()
 end)
 
 -- ── UNION INTEGRATION ─────────────────────────────────────────────────────
+-- FIX FATAL-3 : union trigger "union:spawn:noCharacters" (client event) et
+-- "union:spawn:hasCharacters_server" / "union:spawn:noCharacters_server"
+-- n'existent PAS dans union — union envoie directement kt_character:openCreator
+-- et characters:openSelection côté client.
+--
+-- Les handlers ci-dessous écoutent les vrais events que union déclenche
+-- côté SERVEUR via TriggerEvent (non-network) pour notifier kt_character.
 
-AddEventHandler("union:spawn:noCharacters_server", function(src)
+AddEventHandler("union:player:noCharacters", function(src)
+    if not src then return end
     TriggerClientEvent("kt_character:openCreator", src)
 end)
 
-AddEventHandler("union:spawn:hasCharacters_server", function(src, characters, slots)
+AddEventHandler("union:player:hasCharacters", function(src, characters, slots)
+    if not src then return end
     if not characters or #characters == 0 then
         TriggerClientEvent("kt_character:openCreator", src)
         return

@@ -1,7 +1,16 @@
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 -- KT_CREATION — CLIENT MAIN
 -- Gère l'ouverture/fermeture de l'UI de création.
--- Délègue TOUT à kt_character via exports.
+-- Délègue TOUT à kt_character via exports + events réseau réels.
+--
+-- FIX : la création passait auparavant par "kt_creation:createCharacter"
+-- → kt_creation/server/main.lua → TriggerEvent("kt_character:createCharacter_internal", ...)
+-- Cet event n'existe nulle part (ni handler, ni export) : le callback
+-- n'était jamais appelé, le wizard restait bloqué indéfiniment sur
+-- "Création...". On déclenche maintenant directement l'event réseau
+-- réellement géré côté union (server/modules/character/manager/
+-- characterManager.lua) : "kt_character:characterCreated", qui crée le
+-- personnage ET le spawn.
 -- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 local nuiOpen = false
@@ -47,6 +56,7 @@ local function openCreator()
 end
 
 local function closeCreator()
+    if not nuiOpen then return end
     nuiOpen = false
     exports["kt_character"]:Preview_Stop()
     SetNuiFocus(false, false)
@@ -88,9 +98,10 @@ RegisterNUICallback("cameraControl", function(data, cb)
     cb("ok")
 end)
 
--- Création personnage → server
+-- FIX : on envoie directement l'event réseau réel géré côté union,
+-- au lieu de "kt_creation:createCharacter" qui ne menait nulle part.
 RegisterNUICallback("character:create", function(data, cb)
-    TriggerServerEvent("kt_creation:createCharacter", data)
+    TriggerServerEvent("kt_character:characterCreated", data)
     cb("ok")
 end)
 
@@ -102,13 +113,25 @@ end)
 
 -- ── EVENTS SERVEUR ────────────────────────────────────────────────────────
 
-RegisterNetEvent("kt_creation:created", function(character)
-    print("[kt_creation] Personnage créé: " .. (character.firstname or "?"))
-    closeCreator()
+-- FIX : "union:spawn:apply" est l'event envoyé par le serveur une fois le
+-- personnage créé ET sélectionné avec succès (Character.select, déclenché
+-- en chaîne par characterManager.lua après "kt_character:characterCreated").
+-- Si le créateur est encore ouvert quand cet event arrive, la création
+-- vient de réussir : on ferme le wizard et on laisse le spawn normal
+-- (client/modules/spawn/manager/handler.lua) prendre le relais.
+RegisterNetEvent("union:spawn:apply", function()
+    if nuiOpen then
+        print("[kt_creation] Personnage créé avec succès — fermeture du wizard")
+        closeCreator()
+    end
 end)
 
-RegisterNetEvent("kt_creation:error", function(msg)
-    SendNUIMessage({ type = "error", message = msg })
+-- FIX : "characters:error" est le vrai event d'erreur envoyé par
+-- characterManager.lua en cas d'échec de création/sélection.
+RegisterNetEvent("characters:error", function(msg)
+    if nuiOpen then
+        SendNUIMessage({ type = "error", message = msg })
+    end
 end)
 
 -- ── EVENTS D'OUVERTURE (union / kt_character) ─────────────────────────────
